@@ -15,5 +15,19 @@ def level(id):
     pass
 
 
+@app.route("/leaderboard")
+def leaderboard():
+    pass
+
+
+@app.route("/leaderboard/<int:id>")
+def player():
+    pass
+
+
+@app.route("/signin")
+def signin():
+    pass
+
 if __name__ == "__main__":
     app.run(debug=True)
