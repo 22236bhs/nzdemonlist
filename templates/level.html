@@ -2,6 +2,16 @@
 
 {% block body %}
 
+<h1>name: {{level.name}}</h1>
+<h2>palcement: {{level.placement}}</h2>
 
+<h2>Verifier: {{level.verifier.name}}</h2>
+<h2>Publisher: {{level.publisher.name}}</h2>
+<br>
+<h2>Completions:</h2>
+
+{% for completion in level.level_completions %}
+<h3>{{completion.player.name}}</h3>
+{% endfor %}
 
 {% endblock %}

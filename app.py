@@ -1,7 +1,7 @@
 from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import String, Integer, ForeignKey, select, Table, Column
+from sqlalchemy import String, Integer, ForeignKey, select, Table, Column, update
 
 DATABASE = "database.db"
 
@@ -9,6 +9,17 @@ app = Flask(__name__)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DATABASE}"
 db = SQLAlchemy(app)
+
+
+def CalculatePoints(playerID) -> None:
+    conn = db.session()
+    user = conn.execute(select(Users).where(Users.id == playerID)).scalar_one()
+    totalPoints = 0
+    for completion in user.user_completions:
+        totalPoints += completion.level.points
+    conn.execute(update(Users).where(Users.id == playerID).values(points=totalPoints))
+    conn.commit()
+    
 
 
 class Base(DeclarativeBase):
@@ -21,7 +32,8 @@ class Completions(Base):
     player_id : Mapped[int] = mapped_column(ForeignKey("Users.id"))
     player : Mapped["Users"] = relationship(back_populates="user_completions")
     level_id : Mapped[int] = mapped_column(ForeignKey("Levels.id"))
-    level : Mapped["Levels"] = relationship(back_populates="")
+    level : Mapped["Levels"] = relationship(primaryjoin="Completions.level_id == Levels.id",
+                                            back_populates="level_completions")
     completion_link : Mapped[str] = mapped_column(String())
     FPS : Mapped[int] = mapped_column(Integer())
     CBF : Mapped[int] = mapped_column(Integer())
@@ -46,19 +58,51 @@ class Levels(Base):
     name : Mapped[str] = mapped_column(String())
     placement : Mapped[int] = mapped_column(Integer())
     verifier_id : Mapped[int] = mapped_column(ForeignKey("Users.id"))
+    verifier : Mapped["Users"] = relationship(primaryjoin="Levels.verifier_id == Users.id")
     verification_id : Mapped[int] = mapped_column(ForeignKey("Completions.id"))
-    verification : Mapped["Completions"] = relationship()
+    verification : Mapped["Completions"] = relationship(primaryjoin="Levels.verification_id == Completions.id")
     publisher_id : Mapped[int] = mapped_column(ForeignKey("Users.id"))
+    publisher : Mapped["Users"] = relationship(primaryjoin="Levels.publisher_id == Users.id")
+    level_completions : Mapped[list["Completions"]] = relationship(primaryjoin="Completions.level_id == Levels.id",
+                                                                   back_populates="level")
+    points : Mapped[int] = mapped_column(Integer())
+
+
+class Submissions(Base):
+    __tablename__ = "Submissions"
+    id : Mapped[int] = mapped_column(primary_key=True)
+    completion_id : Mapped[int] = mapped_column(ForeignKey("Completions.id"))
+    completion : Mapped["Completions"] = relationship()
+    raw : Mapped[str] = mapped_column(String())
+    time : Mapped[int] = mapped_column(Integer())
+
+class AdminRanks(Base):
+    __tablename__ = "Admin Ranks"
+    id : Mapped[int] = mapped_column(primary_key=True)
+    name : Mapped[str] = mapped_column(String())
+    description : Mapped[str] = mapped_column(String())
+
+
+class Admins(Base):
+    __tablename__ = "Admins"
+    id : Mapped[int] = mapped_column(primary_key=True)
+    rank_id : Mapped["int"] = mapped_column(ForeignKey("Admin Ranks.id"))
+    rank : Mapped["AdminRanks"] = relationship()
+    player_id : Mapped["int"] = mapped_column(ForeignKey("Users.id"))
+    player : Mapped["Users"] = relationship()
+    
+
 
 @app.route("/")
 def list():
-    pass
+    data = db.session().execute(select(Levels).order_by(Levels.placement)).scalars()
+    return render_template("list.html", data=data)
 
 
 @app.route("/level/<int:id>")
 def level(id):
-    pass
-
+    data = db.session().execute(select(Levels).where(Levels.id == id)).scalar_one()
+    return render_template("level.html", level=data)
 
 @app.route("/leaderboard")
 def leaderboard():
@@ -66,13 +110,21 @@ def leaderboard():
 
 
 @app.route("/leaderboard/<int:id>")
-def player():
+def player(id):
     pass
 
 
 @app.route("/signin")
 def signin():
     pass
+
+
+@app.route("/update_points")
+def ehfwoui():
+    for user in db.session().execute(select(Users)).scalars():
+        CalculatePoints(user.id)
+    return app.redirect("/")
+
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -2,6 +2,10 @@
 
 {% block body %}
 
+{% for level in data %}
 
+<h1><a href="/level/{{level.id}}">{{level.name}}</a></h1>
+
+{% endfor %}
 
 {% endblock %}
