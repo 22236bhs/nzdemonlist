@@ -96,34 +96,45 @@ class Admins(Base):
 @app.route("/")
 def list():
     data = db.session().execute(select(Levels).order_by(Levels.placement)).scalars()
-    return render_template("list.html", data=data)
+    return render_template("list.html", data=data, title="Demonlist")
 
 
 @app.route("/level/<int:id>")
 def level(id):
     data = db.session().execute(select(Levels).where(Levels.id == id)).scalar_one()
-    return render_template("level.html", level=data)
+    return render_template("level.html", level=data, title=data.name, back="/")
 
 @app.route("/leaderboard")
 def leaderboard():
-    pass
+    players = db.session().execute(select(Users).where(select(Completions).where(Completions.player_id == Users.id).exists()).order_by(Users.points.desc())).scalars()
+    return render_template(
+        "leaderboard.html",
+        players=players,
+        title="Leaderboard",
+        back="/"
+    )
 
 
 @app.route("/leaderboard/<int:id>")
 def player(id):
+    playerData = db.session().execute(select(Users).where(Users.id == id)).scalar_one()
+    return render_template(
+        "player.html",
+        player=playerData,
+        title=playerData.name,
+        back="/leaderboard"
+    )
+
+
+@app.route("/profile")
+def profile():
     pass
+
 
 
 @app.route("/signin")
 def signin():
     pass
-
-
-@app.route("/update_points")
-def ehfwoui():
-    for user in db.session().execute(select(Users)).scalars():
-        CalculatePoints(user.id)
-    return app.redirect("/")
 
 
 if __name__ == "__main__":

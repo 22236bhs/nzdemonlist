@@ -2,6 +2,10 @@
 
 {% block body %}
 
+{% for player in players %}
 
+<a href="/leaderboard/{{player.id}}"><h2>{{player.name}} - {{player.points}}</h2></a>
+
+{% endfor %}
 
 {% endblock %}

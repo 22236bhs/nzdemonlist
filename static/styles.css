@@ -1,0 +1,19 @@
+body{
+    margin: 0 10vw 0 10vw;
+}
+
+.header{
+    height: 100px;
+    width: 100%;
+    background-color: rgb(123, 123, 246);
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+}
+
+.header-logo{
+    height: 10%;
+    margin-left: 5%;
+    margin-right: 10%;
+    align-items: center;
+}

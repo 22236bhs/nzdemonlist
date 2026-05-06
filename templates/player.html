@@ -2,6 +2,12 @@
 
 {% block body %}
 
+<h1>{{player.name}}</h1>
+<h2>Points: {{player.points}}</h2>
 
+<h2>Completions:</h2>
+{% for completion in player.user_completions %}
+<a href="/level/{{completion.level.id}}"><h3>- {{completion.level.name}}</h3></a>
+{% endfor %}
 
 {% endblock %}
