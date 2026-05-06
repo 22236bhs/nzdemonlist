@@ -10,6 +10,8 @@ app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DATABASE}"
 db = SQLAlchemy(app)
 
+currentUser = None
+
 
 def CalculatePoints(playerID) -> None:
     conn = db.session()
@@ -128,13 +130,38 @@ def player(id):
 
 @app.route("/profile")
 def profile():
-    pass
+    if currentUser:
+        return render_template(
+            "profile_logged_in.html",
+            user=currentUser,
+            title="Profile",
+            back="/"
+        )
+    else:
+        return render_template(
+            "profile_logged_out.html",
+            title="Profile",
+            back="/"
+        )
 
 
 
-@app.route("/signin")
+@app.route("/signup")
 def signin():
-    pass
+    return render_template(
+        "signup.html",
+        title="Sign Up",
+        back="/profile"
+    )
+
+
+@app.route("/login")
+def login():
+    return render_template(
+        "login.html",
+        title="Log In",
+        back="/profile"
+    )
 
 
 if __name__ == "__main__":
