@@ -1,7 +1,10 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy import String, Integer, ForeignKey, select, Table, Column, update
+from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.utils import secure_filename
+import config
 
 DATABASE = "database.db"
 
@@ -11,7 +14,8 @@ app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DATABASE}"
 db = SQLAlchemy(app)
 
 currentUser = None
-
+success = False
+signupFailMessage = ""
 
 def CalculatePoints(playerID) -> None:
     conn = db.session()
@@ -145,14 +149,65 @@ def profile():
         )
 
 
+@app.route("/logout")
+def logout():
+    global currentUser
+    currentUser = None
+    return app.redirect("/profile")
+
 
 @app.route("/signup")
-def signin():
+def signup():
+    global signupFailMessage
+    message = signupFailMessage
+    signupFailMessage = ""
     return render_template(
         "signup.html",
         title="Sign Up",
-        back="/profile"
+        back="/profile",
+        message=message,
+        userMaxL=config.usernameMaxLength,
+        passMaxL=config.passwordMaxLength
     )
+
+
+@app.route("/signup/register", methods=["GET", "POST"])
+def signupRegister():
+    global currentUser, signupFailMessage
+
+    success = True
+
+    username = request.form.get("username")
+    password = request.form.get("password")
+    
+
+    if (not username) or (len(username) > config.usernameMaxLength):
+        signupFailMessage = "Invalid Username"
+        success = False
+    
+    
+    elif (not password) or (len(password) > config.passwordMaxLength):
+        signupFailMessage = "Invalid Password"
+        success = False
+
+    elif username in db.session().execute(select(Users.name).where(Users.name == username)).scalars():
+        signupFailMessage = "Username already taken"
+        success = False
+    
+
+
+
+
+    if not success:
+        return app.redirect("/signup")
+    
+    else:
+        password_hash = generate_password_hash(password)
+        db.session().add(Users(name=username, password_hash=password_hash, admin=0, points=0))
+        db.session().commit()
+        currentUser = db.session().execute(select(Users).where(Users.name == username)).scalar_one()
+        return app.redirect("/profile")
+
 
 
 @app.route("/login")

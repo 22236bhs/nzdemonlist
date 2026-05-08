@@ -2,6 +2,20 @@
 
 {% block body %}
 
+{% if message %}
+<h1>{{message}}</h1>
+{% endif %}
 
+<form action="/signup/register" method="post">
+    <label>Username</label>
+    <br>
+    <input type="text" name="username" autocomplete="new-password" required maxlength="{{userMaxL}}">
+    <br><br>
+    <label>Password</label>
+    <br>
+    <input type="password" name="password" autocomplete="new-password" required maxlength="{{userMaxL}}">
+    <br><br>
+    <input type="submit" value="Sign Up">
+</form>
 
 {% endblock %}
