@@ -96,7 +96,15 @@ class Admins(Base):
     rank : Mapped["AdminRanks"] = relationship()
     player_id : Mapped["int"] = mapped_column(ForeignKey("Users.id"))
     player : Mapped["Users"] = relationship()
-    
+
+
+def GetUser():
+    return currentUser
+
+
+def SetUser(newUser):
+    global currentUser
+    currentUser = newUser
 
 
 @app.route("/")
@@ -134,7 +142,7 @@ def player(id):
 
 @app.route("/profile")
 def profile():
-    if currentUser:
+    if GetUser():
         return render_template(
             "profile_logged_in.html",
             user=currentUser,
@@ -151,13 +159,15 @@ def profile():
 
 @app.route("/logout")
 def logout():
-    global currentUser
-    currentUser = None
+    SetUser(None)
     return app.redirect("/profile")
 
 
 @app.route("/signup")
 def signup():
+    if GetUser():
+        return render_template("profile.html")
+    
     global signupFailMessage
     message = signupFailMessage
     signupFailMessage = ""
@@ -173,7 +183,9 @@ def signup():
 
 @app.route("/signup/register", methods=["GET", "POST"])
 def signupRegister():
-    global currentUser, signupFailMessage
+    if GetUser():
+        return render_template("profile")
+    global signupFailMessage
 
     success = True
 
@@ -196,8 +208,6 @@ def signupRegister():
     
 
 
-
-
     if not success:
         return app.redirect("/signup")
     
@@ -205,18 +215,43 @@ def signupRegister():
         password_hash = generate_password_hash(password)
         db.session().add(Users(name=username, password_hash=password_hash, admin=0, points=0))
         db.session().commit()
-        currentUser = db.session().execute(select(Users).where(Users.name == username)).scalar_one()
+        SetUser(db.session().execute(select(Users).where(Users.name == username)).scalar_one())
         return app.redirect("/profile")
 
 
 
 @app.route("/login")
 def login():
+    if GetUser():
+        return render_template("profile.html")
+    
+    global signupFailMessage
+    message = signupFailMessage
+    signupFailMessage = ""
     return render_template(
         "login.html",
         title="Log In",
-        back="/profile"
+        back="/profile",
+        message=message,
+        userMaxL=config.usernameMaxLength,
+        passMaxL=config.passwordMaxLength
     )
+
+
+@app.route("login/register", methods=["GET", "POST"])
+def loginregister():
+    global signupFailMessage
+    if GetUser():
+        return render_template("profile.html")
+    
+    success = True
+
+    username = request.form.get("username")
+    password = request.form.get("password")
+
+    if (not username) or (len(username) > config.usernameMaxLength):
+        success = False
+    
 
 
 if __name__ == "__main__":
