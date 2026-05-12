@@ -166,7 +166,7 @@ def logout():
 @app.route("/signup")
 def signup():
     if GetUser():
-        return render_template("profile.html")
+        return app.redirect("/profile")
     
     global signupFailMessage
     message = signupFailMessage
@@ -223,7 +223,7 @@ def signupRegister():
 @app.route("/login")
 def login():
     if GetUser():
-        return render_template("profile.html")
+        return app.redirect("/profile")
     
     global signupFailMessage
     message = signupFailMessage
@@ -238,11 +238,11 @@ def login():
     )
 
 
-@app.route("login/register", methods=["GET", "POST"])
+@app.route("/login/register", methods=["GET", "POST"])
 def loginregister():
     global signupFailMessage
     if GetUser():
-        return render_template("profile.html")
+        return app.redirect("/profile")
     
     success = True
 
@@ -252,6 +252,21 @@ def loginregister():
     if (not username) or (len(username) > config.usernameMaxLength):
         success = False
     
+    elif (not password) or (len(password) > config.passwordMaxLength):
+        success = False
+    
+
+    if not success:
+        return app.redirect("/signin")
+    else:
+        user = db.session().execute(select(Users).where(Users.name == username)).scalar_one_or_none()
+        if not user:
+            return app.redirect("/login")
+        else:
+            if check_password_hash(user.password_hash, password):
+                SetUser(user)
+            return app.redirect("/login")
+                
 
 
 if __name__ == "__main__":

@@ -1,9 +1,16 @@
 body{
     margin: 0 10vw 0 10vw;
+    background-color: #494949;
+    color: white;
+}
+
+.content{
+    height: 100%;
+    background-color: #313131;
 }
 
 .header{
-    height: 100px;
+    max-height: 6vw;
     width: 100%;
     background-color: rgb(123, 123, 246);
     margin: 0;
@@ -16,4 +23,14 @@ body{
     margin-left: 5%;
     margin-right: 10%;
     align-items: center;
+}
+
+.header-button{
+    align-items: center;
+    border: white solid 2px;
+    text-align: center;
+}
+
+a{
+    text-decoration: none;
 }

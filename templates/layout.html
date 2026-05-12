@@ -9,11 +9,13 @@
 <body>
 
     {% include "header.html" %}
-
+    <div class="content">
     {% if back %}
     <h2><a href="{{back}}">Back</a></h2>
     {% endif %}
+    
     {% block body %}
     {% endblock %}
+    </div>
 </body>
 </html>
