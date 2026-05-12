@@ -7,19 +7,27 @@ body{
 .content{
     height: 100%;
     background-color: #313131;
+    margin: 0;
+    padding: 1vw;
 }
 
 .header{
-    max-height: 6vw;
+    height: 8vw;
     width: 100%;
     background-color: rgb(123, 123, 246);
     margin: 0;
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
+    
+}
+
+.header-content{
+    padding: 1vw;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .header-logo{
-    height: 10%;
+    height: 100px;
     margin-left: 5%;
     margin-right: 10%;
     align-items: center;
@@ -27,10 +35,15 @@ body{
 
 .header-button{
     align-items: center;
-    border: white solid 2px;
     text-align: center;
+    font-size: 50px;
 }
 
 a{
     text-decoration: none;
+    color: white;
+}
+
+.back-button{
+    margin: 0;
 }
