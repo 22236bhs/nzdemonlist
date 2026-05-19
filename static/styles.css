@@ -11,23 +11,25 @@ body{
     padding: 1vw;
 }
 
-.header{
-    height: 8vw;
+header{
+    height: 20vh;
     width: 100%;
     background-color: rgb(123, 123, 246);
     margin: 0;
-    
-}
-
-.header-content{
-    padding: 1vw;
     display: flex;
+    flex-direction: row;
+
     justify-content: space-between;
     align-items: center;
 }
 
+header h1{
+    margin: auto 0 auto 0;
+    padding: 1vw 1vw 1vw 0;
+}
+
 .header-logo{
-    height: 100px;
+    height: 15vh;
     margin-left: 5%;
     margin-right: 10%;
     align-items: center;
@@ -36,7 +38,7 @@ body{
 .header-button{
     align-items: center;
     text-align: center;
-    font-size: 50px;
+    font-size: 4vw;
 }
 
 a{
