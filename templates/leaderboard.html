@@ -4,7 +4,7 @@
 
 {% for player in players %}
 
-<h2><a href="/leaderboard/{{player.id}}">{{player.name}} - {{player.points}}</a></h2>
+<h2 class="leaderboard-player"><a href="/leaderboard/{{player.id}}">{{player.name}} - {{player.points}}</a></h2>
 
 {% endfor %}
 
