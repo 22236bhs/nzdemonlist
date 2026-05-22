@@ -3,7 +3,7 @@
 *{
     font-family: "Raleway", sans-serif;
     font-optical-sizing: auto;
-    font-weight: normal;
+    font-weight: bold;
     font-style: normal;
 }
 
@@ -38,7 +38,8 @@ nav{
 }
 
 .header-logo{
-    height: 13vh;
+    border-radius: 10px;
+    height: 10vh;
     margin-left: 5%;
     margin-right: 10%;
     align-items: center;

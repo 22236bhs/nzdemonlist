@@ -250,9 +250,11 @@ def loginregister():
     password = request.form.get("password")
 
     if (not username) or (len(username) > config.usernameMaxLength):
+        signupFailMessage = "Invalid Username"
         success = False
     
     elif (not password) or (len(password) > config.passwordMaxLength):
+        signupFailMessage = "Invalid Password"
         success = False
     
 
@@ -261,10 +263,14 @@ def loginregister():
     else:
         user = db.session().execute(select(Users).where(Users.name == username)).scalar_one_or_none()
         if not user:
+            signupFailMessage = "Incorrect Username or Password"
             return app.redirect("/login")
+           
         else:
             if check_password_hash(user.password_hash, password):
                 SetUser(user)
+                return app.redirect("/profile")
+            signupFailMessage = "Incorrect Username or Password"
             return app.redirect("/login")
                 
 
