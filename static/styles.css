@@ -19,10 +19,11 @@ body{
     margin: 0;
     padding: 1vw;
     padding-top: 10px;
+    min-height: 81vh;
 }
 
 header{
-    height: 20vh;
+    max-height: 20vh;
     width: 100%;
     background-color: #2457be;
     margin: 0;
@@ -37,7 +38,7 @@ nav{
 }
 
 .header-logo{
-    height: 15vh;
+    height: 13vh;
     margin-left: 5%;
     margin-right: 10%;
     align-items: center;
