@@ -10,7 +10,7 @@
 <h2>Victors:</h2>
 
 {% for completion in level.level_completions %}
-<h3>{{completion.player.name}}</h3>
+<h3><a href="/leaderboard/{{completion.player.id}}">{{completion.player.name}}</a></h3>
 {% endfor %}
 
 {% endblock %}

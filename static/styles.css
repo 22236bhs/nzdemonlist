@@ -67,4 +67,9 @@ a{
     display: grid;
     grid-template-columns: 1fr 1fr;
     text-align: center;
+    font-size: 40px;
+}
+
+.sign-up-form{
+    font-size: 40px;
 }
