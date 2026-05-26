@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, session
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy import String, Integer, ForeignKey, select, Table, Column, update
@@ -12,9 +12,8 @@ app = Flask(__name__)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DATABASE}"
 db = SQLAlchemy(app)
+app.secret_key = "awwwyeah"
 
-currentUser = None
-success = False
 signupFailMessage = ""
 
 def CalculatePoints(playerID) -> None:
@@ -99,12 +98,8 @@ class Admins(Base):
 
 
 def GetUser():
-    return currentUser
-
-
-def SetUser(newUser):
-    global currentUser
-    currentUser = newUser
+    userID = session.get("user")
+    return db.session.execute(select(Users).where(Users.id == userID)).scalar_one_or_none()
 
 
 @app.route("/")
@@ -145,7 +140,7 @@ def profile():
     if GetUser():
         return render_template(
             "profile_logged_in.html",
-            user=currentUser,
+            user=session.get("user"),
             title="Profile",
             back="/"
         )
@@ -159,7 +154,6 @@ def profile():
 
 @app.route("/logout")
 def logout():
-    SetUser(None)
     return app.redirect("/profile")
 
 
@@ -215,14 +209,17 @@ def signupRegister():
         password_hash = generate_password_hash(password)
         db.session().add(Users(name=username, password_hash=password_hash, admin=0, points=0))
         db.session().commit()
-        SetUser(db.session().execute(select(Users).where(Users.name == username)).scalar_one())
+        session["user"] = db.session().execute(select(Users).where(Users.name == username)).scalar_one().id
         return app.redirect("/profile")
-
 
 
 @app.route("/login")
 def login():
-    if GetUser():
+    # create session if it doesn't already exist
+    if "user" not in session:
+        session["user"] = False
+
+    if session.get("user"):
         return app.redirect("/profile")
     
     global signupFailMessage
@@ -268,7 +265,8 @@ def loginregister():
            
         else:
             if check_password_hash(user.password_hash, password):
-                SetUser(user)
+                session["user"] = user.id
+                print(session.get("user"))
                 return app.redirect("/profile")
             signupFailMessage = "Incorrect Username or Password"
             return app.redirect("/login")
