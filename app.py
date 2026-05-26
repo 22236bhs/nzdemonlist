@@ -3,7 +3,6 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy import String, Integer, ForeignKey, select, Table, Column, update
 from werkzeug.security import check_password_hash, generate_password_hash
-from werkzeug.utils import secure_filename
 import config
 
 DATABASE = "database.db"
