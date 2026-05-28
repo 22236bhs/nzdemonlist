@@ -97,8 +97,27 @@ class Admins(Base):
 
 
 def GetUser():
-    userID = session.get("user")
-    return db.session.execute(select(Users).where(Users.id == userID)).scalar_one_or_none()
+    if "user" in session:
+        userID = session.get("user")
+        if session.get("loggedin"):
+            return db.session.execute(select(Users).where(Users.id == userID)).scalar_one_or_none()
+    else:
+        return False
+
+
+def SetUser(userID : int):
+    session["user"] = userID
+
+
+def IsLoggedIn():
+    if "loggedin" in session:
+        return session.get("loggedin")
+    else:
+        return False
+
+
+def SetLoggedIn(x : bool):
+    session["loggedin"] = x
 
 
 @app.route("/")
@@ -136,7 +155,7 @@ def player(id):
 
 @app.route("/profile")
 def profile():
-    if GetUser():
+    if IsLoggedIn():
         return render_template(
             "profile_logged_in.html",
             user=session.get("user"),
@@ -153,12 +172,14 @@ def profile():
 
 @app.route("/logout")
 def logout():
+    SetUser(0)
+    SetLoggedIn(False)
     return app.redirect("/profile")
 
 
 @app.route("/signup")
 def signup():
-    if GetUser():
+    if IsLoggedIn():
         return app.redirect("/profile")
     
     global signupFailMessage
@@ -176,7 +197,7 @@ def signup():
 
 @app.route("/signup/register", methods=["GET", "POST"])
 def signupRegister():
-    if GetUser():
+    if IsLoggedIn():
         return render_template("profile")
     global signupFailMessage
 
