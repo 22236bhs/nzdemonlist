@@ -99,14 +99,12 @@ class Admins(Base):
 def GetUser():
     if "user" in session:
         userID = session.get("user")
-        if session.get("loggedin"):
+        if IsLoggedIn():
             return db.session.execute(select(Users).where(Users.id == userID)).scalar_one_or_none()
+        else:
+            return False
     else:
         return False
-
-
-def SetUser(userID : int):
-    session["user"] = userID
 
 
 def IsLoggedIn():
@@ -116,8 +114,14 @@ def IsLoggedIn():
         return False
 
 
-def SetLoggedIn(x : bool):
-    session["loggedin"] = x
+def LogInUser(userID):
+    session["user"] = userID
+    session["loggedin"] = True
+
+
+def SignOutUser():
+    session["user"] = 0
+    session["loggedin"] = False
 
 
 @app.route("/")
@@ -158,7 +162,7 @@ def profile():
     if IsLoggedIn():
         return render_template(
             "profile_logged_in.html",
-            user=session.get("user"),
+            user=GetUser(),
             title="Profile",
             back="/"
         )
@@ -172,8 +176,7 @@ def profile():
 
 @app.route("/logout")
 def logout():
-    SetUser(0)
-    SetLoggedIn(False)
+    SignOutUser()
     return app.redirect("/profile")
 
 
@@ -205,7 +208,7 @@ def signupRegister():
 
     username = request.form.get("username")
     password = request.form.get("password")
-    
+    confirmPassword = request.form.get("confirm-password")
 
     if (not username) or (len(username) > config.usernameMaxLength):
         signupFailMessage = "Invalid Username"
@@ -220,6 +223,10 @@ def signupRegister():
         signupFailMessage = "Username already taken"
         success = False
     
+    elif confirmPassword != password:
+        signupFailMessage = "Confirm Password does not match Password"
+        success = False
+    
 
 
     if not success:
@@ -229,17 +236,13 @@ def signupRegister():
         password_hash = generate_password_hash(password)
         db.session().add(Users(name=username, password_hash=password_hash, admin=0, points=0))
         db.session().commit()
-        session["user"] = db.session().execute(select(Users).where(Users.name == username)).scalar_one().id
+        LogInUser(db.session().execute(select(Users).where(Users.name == username)).scalar_one().id)
         return app.redirect("/profile")
 
 
 @app.route("/login")
 def login():
-    # create session if it doesn't already exist
-    if "user" not in session:
-        session["user"] = False
-
-    if session.get("user"):
+    if IsLoggedIn():
         return app.redirect("/profile")
     
     global signupFailMessage
@@ -258,7 +261,7 @@ def login():
 @app.route("/login/register", methods=["GET", "POST"])
 def loginregister():
     global signupFailMessage
-    if GetUser():
+    if IsLoggedIn():
         return app.redirect("/profile")
     
     success = True
@@ -285,8 +288,7 @@ def loginregister():
            
         else:
             if check_password_hash(user.password_hash, password):
-                session["user"] = user.id
-                print(session.get("user"))
+                LogInUser(user.id)
                 return app.redirect("/profile")
             signupFailMessage = "Incorrect Username or Password"
             return app.redirect("/login")

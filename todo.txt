@@ -1,0 +1,9 @@
+To do:
+- Sprint 1 testing
+- Record submissions
+
+
+Doing:
+- Finish all session stuff (PRIORITY)
+    -- fail messages
+    -- make sure everything works
