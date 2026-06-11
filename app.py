@@ -13,7 +13,6 @@ app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DATABASE}"
 db = SQLAlchemy(app)
 app.secret_key = "awwwyeah"
 
-signupFailMessage = ""
 
 def CalculatePoints(playerID) -> None:
     conn = db.session()
@@ -24,7 +23,6 @@ def CalculatePoints(playerID) -> None:
     conn.execute(update(Users).where(Users.id == playerID).values(points=totalPoints))
     conn.commit()
     
-
 
 class Base(DeclarativeBase):
     pass
@@ -80,6 +78,7 @@ class Submissions(Base):
     raw : Mapped[str] = mapped_column(String())
     time : Mapped[int] = mapped_column(Integer())
 
+
 class AdminRanks(Base):
     __tablename__ = "Admin Ranks"
     id : Mapped[int] = mapped_column(primary_key=True)
@@ -122,6 +121,29 @@ def LogInUser(userID):
 def SignOutUser():
     session["user"] = 0
     session["loggedin"] = False
+
+
+def SetFailMessage(message : str):
+    route = request.path
+    if not "failmessage" in session:
+        session["failmessage"] = {}
+    session["failmessage"][route] = message
+
+
+def GetFailMessage():
+    route = request.path
+    if "failmessage" in session:
+        if route in session["failmessage"]:
+            message = session["failmessage"][route]
+            SetFailMessage("")
+            return message
+        else:
+            return ""
+        
+        
+    else:
+        return ""
+
 
 
 @app.route("/")
@@ -185,9 +207,8 @@ def signup():
     if IsLoggedIn():
         return app.redirect("/profile")
     
-    global signupFailMessage
-    message = signupFailMessage
-    signupFailMessage = ""
+    message = GetFailMessage()
+
     return render_template(
         "signup.html",
         title="Sign Up",
@@ -202,7 +223,6 @@ def signup():
 def signupRegister():
     if IsLoggedIn():
         return render_template("profile")
-    global signupFailMessage
 
     success = True
 
@@ -211,23 +231,22 @@ def signupRegister():
     confirmPassword = request.form.get("confirm-password")
 
     if (not username) or (len(username) > config.usernameMaxLength):
-        signupFailMessage = "Invalid Username"
+        SetFailMessage("Invalid Input")
         success = False
     
     
     elif (not password) or (len(password) > config.passwordMaxLength):
-        signupFailMessage = "Invalid Password"
+        SetFailMessage("Invalid Input")
         success = False
 
     elif username in db.session().execute(select(Users.name).where(Users.name == username)).scalars():
-        signupFailMessage = "Username already taken"
+        SetFailMessage("Username already taken")
         success = False
     
     elif confirmPassword != password:
-        signupFailMessage = "Confirm Password does not match Password"
+        SetFailMessage("Confirm Password field does not match Password")
         success = False
     
-
 
     if not success:
         return app.redirect("/signup")
@@ -245,9 +264,9 @@ def login():
     if IsLoggedIn():
         return app.redirect("/profile")
     
-    global signupFailMessage
-    message = signupFailMessage
-    signupFailMessage = ""
+    message = GetFailMessage()
+    print(session)
+
     return render_template(
         "login.html",
         title="Log In",
@@ -260,7 +279,6 @@ def login():
 
 @app.route("/login/register", methods=["GET", "POST"])
 def loginregister():
-    global signupFailMessage
     if IsLoggedIn():
         return app.redirect("/profile")
     
@@ -270,11 +288,11 @@ def loginregister():
     password = request.form.get("password")
 
     if (not username) or (len(username) > config.usernameMaxLength):
-        signupFailMessage = "Invalid Username"
+        SetFailMessage("Invalid Input")
         success = False
     
     elif (not password) or (len(password) > config.passwordMaxLength):
-        signupFailMessage = "Invalid Password"
+        SetFailMessage("Invalid Input")
         success = False
     
 
@@ -283,14 +301,14 @@ def loginregister():
     else:
         user = db.session().execute(select(Users).where(Users.name == username)).scalar_one_or_none()
         if not user:
-            signupFailMessage = "Incorrect Username or Password"
+            SetFailMessage("Incorrect Username or Password")
             return app.redirect("/login")
            
         else:
             if check_password_hash(user.password_hash, password):
                 LogInUser(user.id)
                 return app.redirect("/profile")
-            signupFailMessage = "Incorrect Username or Password"
+            SetFailMessage("Incorrect Username or Password")
             return app.redirect("/login")
                 
 
