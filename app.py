@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, session
+from flask import Flask, render_template, request, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy import String, Integer, ForeignKey, select, Table, Column, update
@@ -123,24 +123,21 @@ def SignOutUser():
     session["loggedin"] = False
 
 
-def SetFailMessage(message : str):
-    route = request.path
+def SetFailMessage(route : str, message : str):
     if not "failmessage" in session:
         session["failmessage"] = {}
     session["failmessage"][route] = message
+    session.modified = True
 
 
-def GetFailMessage():
-    route = request.path
+def GetFailMessage(route : str):
     if "failmessage" in session:
         if route in session["failmessage"]:
             message = session["failmessage"][route]
-            SetFailMessage("")
+            SetFailMessage(route, "")
             return message
         else:
             return ""
-        
-        
     else:
         return ""
 
@@ -207,7 +204,7 @@ def signup():
     if IsLoggedIn():
         return app.redirect("/profile")
     
-    message = GetFailMessage()
+    message = GetFailMessage("signup")
 
     return render_template(
         "signup.html",
@@ -231,20 +228,20 @@ def signupRegister():
     confirmPassword = request.form.get("confirm-password")
 
     if (not username) or (len(username) > config.usernameMaxLength):
-        SetFailMessage("Invalid Input")
+        SetFailMessage("signup", "Invalid Input")
         success = False
     
     
     elif (not password) or (len(password) > config.passwordMaxLength):
-        SetFailMessage("Invalid Input")
+        SetFailMessage("signup", "Invalid Input")
         success = False
 
     elif username in db.session().execute(select(Users.name).where(Users.name == username)).scalars():
-        SetFailMessage("Username already taken")
+        SetFailMessage("signup", "Username already taken")
         success = False
     
     elif confirmPassword != password:
-        SetFailMessage("Confirm Password field does not match Password")
+        SetFailMessage("signup", "Confirm Password field does not match Password")
         success = False
     
 
@@ -264,8 +261,7 @@ def login():
     if IsLoggedIn():
         return app.redirect("/profile")
     
-    message = GetFailMessage()
-    print(session)
+    message = GetFailMessage("login")
 
     return render_template(
         "login.html",
@@ -288,11 +284,11 @@ def loginregister():
     password = request.form.get("password")
 
     if (not username) or (len(username) > config.usernameMaxLength):
-        SetFailMessage("Invalid Input")
+        SetFailMessage("login", "Invalid Input")
         success = False
     
     elif (not password) or (len(password) > config.passwordMaxLength):
-        SetFailMessage("Invalid Input")
+        SetFailMessage("login", "Invalid Input")
         success = False
     
 
@@ -301,14 +297,14 @@ def loginregister():
     else:
         user = db.session().execute(select(Users).where(Users.name == username)).scalar_one_or_none()
         if not user:
-            SetFailMessage("Incorrect Username or Password")
+            SetFailMessage("login", "Incorrect Username or Password")
             return app.redirect("/login")
            
         else:
             if check_password_hash(user.password_hash, password):
                 LogInUser(user.id)
                 return app.redirect("/profile")
-            SetFailMessage("Incorrect Username or Password")
+            SetFailMessage("login", "Incorrect Username or Password")
             return app.redirect("/login")
                 
 
