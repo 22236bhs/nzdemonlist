@@ -1,5 +1,3 @@
 To do:
 - Sprint 1 testing
 - Record submissions
-
-
