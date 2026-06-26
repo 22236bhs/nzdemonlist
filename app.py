@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, session, flash
+from flask import Flask, render_template, request, session, flash, abort
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy import String, Integer, ForeignKey, select, Table, Column, update
@@ -142,6 +142,13 @@ def GetFailMessage(route : str):
         return ""
 
 
+def PushError(number, code):
+    return render_template("error_page.html",
+                           error_code=number,
+                           title=f"{number} Error",
+                           error=code), number
+
+
 
 @app.route("/")
 def list():
@@ -151,7 +158,9 @@ def list():
 
 @app.route("/level/<int:id>")
 def level(id):
-    data = db.session().execute(select(Levels).where(Levels.id == id)).scalar_one()
+    data = db.session().execute(select(Levels).where(Levels.id == id)).scalar_one_or_none()
+    if not data:
+        abort(404)
     return render_template("level.html", level=data, title=data.name, back="/")
 
 @app.route("/leaderboard")
@@ -167,7 +176,9 @@ def leaderboard():
 
 @app.route("/leaderboard/<int:id>")
 def player(id):
-    playerData = db.session().execute(select(Users).where(Users.id == id)).scalar_one()
+    playerData = db.session().execute(select(Users).where(Users.id == id)).scalar_one_or_none()
+    if not playerData:
+        abort(404)
     return render_template(
         "player.html",
         player=playerData,
@@ -307,6 +318,11 @@ def loginregister():
             SetFailMessage("login", "Incorrect Username or Password")
             return app.redirect("/login")
                 
+
+
+@app.errorhandler(404)
+def error404(e):
+    return PushError(404, e)
 
 
 if __name__ == "__main__":
