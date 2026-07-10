@@ -248,11 +248,11 @@ def signupRegister():
         success = False
 
     elif username in db.session().execute(select(Users.name).where(Users.name == username)).scalars():
-        SetFailMessage("signup", "Username already taken")
+        SetFailMessage("signup", config.usernameTaken)
         success = False
     
     elif confirmPassword != password:
-        SetFailMessage("signup", "Confirm Password field does not match Password")
+        SetFailMessage("signup", config.confirmPasswordFail)
         success = False
     
 
@@ -308,14 +308,14 @@ def loginregister():
     else:
         user = db.session().execute(select(Users).where(Users.name == username)).scalar_one_or_none()
         if not user:
-            SetFailMessage("login", "Incorrect Username or Password")
+            SetFailMessage("login", config.loginFail)
             return app.redirect("/login")
            
         else:
             if check_password_hash(user.password_hash, password):
                 LogInUser(user.id)
                 return app.redirect("/profile")
-            SetFailMessage("login", "Incorrect Username or Password")
+            SetFailMessage("login", config.loginFail)
             return app.redirect("/login")
                 
 
