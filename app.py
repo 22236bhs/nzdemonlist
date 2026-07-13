@@ -304,7 +304,7 @@ def loginregister():
     
 
     if not success:
-        return app.redirect("/signin")
+        return app.redirect("/login")
     else:
         user = db.session().execute(select(Users).where(Users.name == username)).scalar_one_or_none()
         if not user:
