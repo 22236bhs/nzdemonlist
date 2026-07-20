@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, session, flash, abort
+from flask import Flask, render_template, request, session, abort
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy import String, Integer, ForeignKey, select, Table, Column, update
@@ -147,7 +147,6 @@ def PushError(number, code):
                            error_code=number,
                            title=f"{number} Error",
                            error=code), number
-
 
 
 @app.route("/")
@@ -317,7 +316,21 @@ def loginregister():
                 return app.redirect("/profile")
             SetFailMessage("login", config.loginFail)
             return app.redirect("/login")
-                
+
+
+@app.route("/submission")
+def SubmitRecord():
+    if not IsLoggedIn():
+        return render_template(
+            "logged_out_redirect.html",
+            title="Logged Out"
+            )
+    
+    return render_template(
+        "record_submission.html",
+        title="Submit Record",
+        back="/profile"
+    )
 
 
 @app.errorhandler(404)
