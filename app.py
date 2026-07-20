@@ -4,6 +4,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy import String, Integer, ForeignKey, select, Table, Column, update
 from werkzeug.security import check_password_hash, generate_password_hash
 import config
+import time
 
 DATABASE = "database.db"
 
@@ -39,7 +40,6 @@ class Completions(Base):
     completion_link : Mapped[str] = mapped_column(String())
     FPS : Mapped[int] = mapped_column(Integer())
     CBF : Mapped[int] = mapped_column(Integer())
-    CBS : Mapped[int] = mapped_column(Integer())
     accepted : Mapped[int] = mapped_column(Integer())
     index : Mapped[int] = mapped_column(Integer())
 
@@ -75,7 +75,6 @@ class Submissions(Base):
     id : Mapped[int] = mapped_column(primary_key=True)
     completion_id : Mapped[int] = mapped_column(ForeignKey("Completions.id"))
     completion : Mapped["Completions"] = relationship()
-    raw : Mapped[str] = mapped_column(String())
     time : Mapped[int] = mapped_column(Integer())
 
 
@@ -123,18 +122,18 @@ def SignOutUser():
     session["loggedin"] = False
 
 
-def SetFailMessage(route : str, message : str):
-    if not "failmessage" in session:
-        session["failmessage"] = {}
-    session["failmessage"][route] = message
+def SetMessage(route : str, message : str):
+    if not "message" in session:
+        session["message"] = {}
+    session["message"][route] = message
     session.modified = True
 
 
-def GetFailMessage(route : str):
-    if "failmessage" in session:
-        if route in session["failmessage"]:
-            message = session["failmessage"][route]
-            SetFailMessage(route, "")
+def GetMessage(route : str):
+    if "message" in session:
+        if route in session["message"]:
+            message = session["message"][route]
+            SetMessage(route, "")
             return message
         else:
             return ""
@@ -147,6 +146,22 @@ def PushError(number, code):
                            error_code=number,
                            title=f"{number} Error",
                            error=code), number
+
+
+def LoggedOutRedirect():
+    return render_template(
+        "logged_out_redirect.html",
+        title="Logged Out"
+        )
+
+
+def IsInt(x):
+    try:
+        x = int(x)
+    except:
+        return False
+    else:
+        return True
 
 
 @app.route("/")
@@ -214,7 +229,7 @@ def signup():
     if IsLoggedIn():
         return app.redirect("/profile")
     
-    message = GetFailMessage("signup")
+    message = GetMessage("signup")
 
     return render_template(
         "signup.html",
@@ -238,20 +253,20 @@ def signupRegister():
     confirmPassword = request.form.get("confirm-password")
 
     if (not username) or (len(username) > config.usernameMaxLength):
-        SetFailMessage("signup", "Invalid Input")
+        SetMessage("signup", "Invalid Input")
         success = False
     
     
     elif (not password) or (len(password) > config.passwordMaxLength):
-        SetFailMessage("signup", "Invalid Input")
+        SetMessage("signup", "Invalid Input")
         success = False
 
     elif username in db.session().execute(select(Users.name).where(Users.name == username)).scalars():
-        SetFailMessage("signup", config.usernameTaken)
+        SetMessage("signup", config.usernameTaken)
         success = False
     
     elif confirmPassword != password:
-        SetFailMessage("signup", config.confirmPasswordFail)
+        SetMessage("signup", config.confirmPasswordFail)
         success = False
     
 
@@ -271,7 +286,7 @@ def login():
     if IsLoggedIn():
         return app.redirect("/profile")
     
-    message = GetFailMessage("login")
+    message = GetMessage("login")
 
     return render_template(
         "login.html",
@@ -294,11 +309,11 @@ def loginregister():
     password = request.form.get("password")
 
     if (not username) or (len(username) > config.usernameMaxLength):
-        SetFailMessage("login", "Invalid Input")
+        SetMessage("login", "Invalid Input")
         success = False
     
     elif (not password) or (len(password) > config.passwordMaxLength):
-        SetFailMessage("login", "Invalid Input")
+        SetMessage("login", "Invalid Input")
         success = False
     
 
@@ -307,30 +322,94 @@ def loginregister():
     else:
         user = db.session().execute(select(Users).where(Users.name == username)).scalar_one_or_none()
         if not user:
-            SetFailMessage("login", config.loginFail)
+            SetMessage("login", config.loginFail)
             return app.redirect("/login")
            
         else:
             if check_password_hash(user.password_hash, password):
                 LogInUser(user.id)
                 return app.redirect("/profile")
-            SetFailMessage("login", config.loginFail)
+            SetMessage("login", config.loginFail)
             return app.redirect("/login")
 
 
 @app.route("/submission")
 def SubmitRecord():
     if not IsLoggedIn():
-        return render_template(
-            "logged_out_redirect.html",
-            title="Logged Out"
-            )
+        return LoggedOutRedirect()
     
+    levels = db.session.execute(select(Levels).order_by(Levels.placement)).scalars()
+
     return render_template(
         "record_submission.html",
         title="Submit Record",
-        back="/profile"
+        back="/profile",
+        levels=levels,
+        message = GetMessage("submission"),
+        linkMaxL = config.submissionCompletionLinkMaxL
     )
+
+
+@app.route("/submission/submit", methods=["GET", "POST"])
+def SubmitRecordForm():
+    if not IsLoggedIn():
+        return LoggedOutRedirect()
+    
+    levelID = request.form.get("level")
+    completionLink = request.form.get("completion_link")
+    fps = request.form.get("FPS")
+    cbf = request.form.get("CBF")
+
+    success = True
+
+    if (not levelID) or (not completionLink) or (not fps) or (not cbf):
+        success = False
+    
+    elif len(completionLink) > config.submissionCompletionLinkMaxL:
+        success = False
+    
+    elif not IsInt(cbf):
+        success = False
+
+    elif int(cbf) < 0 or int(cbf) > 2:
+        success = False
+    
+    elif not IsInt(fps):
+        success = False
+    
+    elif int(fps) < 1:
+        success = False
+
+    if not success:
+        SetMessage("submission", config.submissionFail)
+        return app.redirect("/submission")
+    
+    nextIndex = len(db.session.execute(select(Completions).where(Completions.level_id == levelID)).fetchall()) + 1
+
+
+    completion = Completions(
+        player_id=GetUser().id,
+        level_id=levelID,
+        completion_link=completionLink,
+        FPS=fps,
+        CBF=cbf,
+        accepted=0,
+        index=nextIndex
+        )
+    
+    db.session.add(completion) 
+
+    completionID = db.session.execute(select(Completions.id).where(Completions.level_id == levelID).where(Completions.player_id == GetUser().id)).first()[0]
+
+    submission = Submissions(completion_id=completionID, time=time.time())
+
+    db.session.add(submission)
+
+    db.session.commit()
+
+    SetMessage("submission", config.submissionSuccess)
+    
+    return app.redirect("/submission")
 
 
 @app.errorhandler(404)

@@ -1,4 +1,45 @@
 {% extends "layout.html" %}
 
 {% block content %}
+
+{% if message %}
+<h1>{{message}}</h1>
+<br>
+{% endif %}
+
+<h1 class="page-top-text">Submit a Level Completion</h1>
+
+<form action="/submission/submit" method="post">
+    
+    <label>Level</label>
+    <br><br>
+    <select name="level">
+        {% for level in levels %}
+        <option value="{{level.id}}">{{level.placement}}. {{level.name}}</option>
+        {% endfor %}
+    </select>
+    <br><br><br>
+
+    <label>Completion Link</label>
+    <br><br>
+    <input type="text" name="completion_link" maxlength="100" required>
+    <br><br><br>
+
+    <label>FPS</label>
+    <br><br>
+    <input type="number" name="FPS" required>
+    <br><br><br>
+
+    <label>CBF</label>
+    <br><br>
+    <select name="CBF">
+        <option value="0">No CBF</option>
+        <option value="1">Click between Steps (Vanilla)</option>
+        <option value="2">Click between Frames</option>
+    </select>
+    <br><br><br>
+
+    <input type="submit" value="Submit">
+</form>
+
 {% endblock %}
