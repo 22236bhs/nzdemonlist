@@ -6,3 +6,4 @@ loginFail = "Incorrect Username or Password"
 submissionFail = "Invalid Submission"
 submissionCompletionLinkMaxL = 100
 submissionSuccess = "Record Submitted Successfully"
+submissionAlreadyExists = "Record Already Exists"

@@ -3,8 +3,13 @@
 {% block content %}
 
 {% for level in data %}
-
-<h1><a href="/level/{{level.id}}">{{level.placement}}. {{level.name}}</a></h1>
+<a href="/level/{{level.id}}">
+    <div class="level-card">
+        <h1 class="level-info">#{{level.placement}}</h1>
+        <img class="level-thumbnail" src="{{url_for('static', filename='images/placeholder.jpg')}}" alt="{{level.name}} Thumbnail">
+        <h1 class="level-info">{{level.name}}</h1>
+    </div>
+</a>
 
 {% endfor %}
 

@@ -83,3 +83,21 @@ label{
 .page-top-text{
     font-size: 40px;
 }
+
+.level-thumbnail{
+    width: 200px;
+}
+
+.level-info{
+    display: inline;
+}
+
+.level-card{
+    display: grid;
+    grid-template-columns: 1fr 3fr 8fr;
+    background-color: #242424;
+    margin-bottom: 50px;
+    text-align: center;
+    align-items: center;
+    border-radius: 15px;
+}

@@ -383,6 +383,10 @@ def SubmitRecordForm():
     if not success:
         SetMessage("submission", config.submissionFail)
         return app.redirect("/submission")
+
+    if db.session.execute(select(Completions).where(Completions.level_id == levelID).where(Completions.player_id == GetUser().id)).scalar_one_or_none():
+        SetMessage("submission", config.submissionAlreadyExists)
+        return app.redirect("/submission")
     
     nextIndex = len(db.session.execute(select(Completions).where(Completions.level_id == levelID)).fetchall()) + 1
 
