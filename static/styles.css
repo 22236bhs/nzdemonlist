@@ -28,7 +28,7 @@ header{
     background-color: #2457be;
     margin: 0;
     display: grid;
-    grid-template-columns: 1fr 4fr;
+    grid-template-columns: 1fr 3fr;
     align-items: center;
 }
 
@@ -39,7 +39,7 @@ nav{
 
 .header-logo{
     border-radius: 10px;
-    height: 10vh;
+    height: 8vh;
     margin-left: 5%;
     margin-right: 10%;
     align-items: center;
@@ -48,7 +48,10 @@ nav{
 .header-button{
     align-items: center;
     text-align: center;
-    font-size: 3vw;
+    font-size: 50px;
+    background-color: #1C3C7E;
+    border-radius: 30px;
+    width: 18vw;
 }
 
 a{
