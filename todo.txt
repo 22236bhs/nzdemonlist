@@ -1,3 +1,4 @@
 To do:
-- Sprint 1 testing
-- Record submissions
+- Make wireframes
+- Admin accounts
+- Record accepting
