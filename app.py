@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, session, abort
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import String, Integer, ForeignKey, select, Table, Column, update
+from sqlalchemy import String, Integer, ForeignKey, select, Table, Column, update, func
 from werkzeug.security import check_password_hash, generate_password_hash
 import config
 import time
@@ -164,6 +164,26 @@ def IsInt(x):
         return True
 
 
+def IsAdmin():
+    if IsLoggedIn():
+        if db.session.execute(select(Admins).where(Admins.player_id == GetUser().id)).scalar_one_or_none():
+            return True
+    return False
+
+
+def AdminPageReject():
+    return render_template(
+        "adminrejection.html",
+        title="Access Denied"
+        )
+
+
+def query_count(query):
+    counter = query.statement.with_only_columns([func.count()])
+    counter = counter.order_by(None)
+    return query.session.execute(counter).scalar()
+
+
 @app.route("/")
 def list():
     data = db.session().execute(select(Levels).order_by(Levels.placement)).scalars()
@@ -208,13 +228,14 @@ def profile():
             "profile_logged_in.html",
             user=GetUser(),
             title="Profile",
-            back="/"
+            back="/",
+            isadmin=IsAdmin()
         )
     else:
         return render_template(
             "profile_logged_out.html",
             title="Profile",
-            back="/"
+            back="/",
         )
 
 
@@ -415,6 +436,21 @@ def SubmitRecordForm():
     
     return app.redirect("/submission")
 
+
+@app.route("/reviewrecords")
+def ReviewRecord():
+    if not IsAdmin():
+        return AdminPageReject()
+
+    submissions = db.session.execute(select(Submissions).order_by(Submissions.time.asc())).scalars().fetchmany(15)
+    for i in submissions:
+        print(i.id)
+
+    return render_template(
+        "recordreviewlist.html",
+        submissions=submissions,
+        title="Submission Review"
+        )
 
 @app.errorhandler(404)
 def error404(e):
