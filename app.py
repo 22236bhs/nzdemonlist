@@ -12,7 +12,7 @@ app = Flask(__name__)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DATABASE}"
 db = SQLAlchemy(app)
-app.secret_key = "awwwyeah"
+app.secret_key = "8T3198T31RG318F318G31F8137F8"
 
 
 def CalculatePoints(playerID) -> None:
@@ -178,12 +178,6 @@ def AdminPageReject():
         )
 
 
-def query_count(query):
-    counter = query.statement.with_only_columns([func.count()])
-    counter = counter.order_by(None)
-    return query.session.execute(counter).scalar()
-
-
 @app.route("/")
 def list():
     data = db.session().execute(select(Levels).order_by(Levels.placement)).scalars()
@@ -263,7 +257,7 @@ def signup():
 
 
 @app.route("/signup/register", methods=["GET", "POST"])
-def signupRegister():
+def signupregister():
     if IsLoggedIn():
         return render_template("profile")
 
@@ -355,7 +349,7 @@ def loginregister():
 
 
 @app.route("/submission")
-def SubmitRecord():
+def submitrecord():
     if not IsLoggedIn():
         return LoggedOutRedirect()
     
@@ -367,12 +361,13 @@ def SubmitRecord():
         back="/profile",
         levels=levels,
         message = GetMessage("submission"),
-        linkMaxL = config.submissionCompletionLinkMaxL
+        linkMaxL = config.submissionCompletionLinkMaxL,
+        cbfOptions=config.cbfOptions
     )
 
 
 @app.route("/submission/submit", methods=["GET", "POST"])
-def SubmitRecordForm():
+def submitrecordform():
     if not IsLoggedIn():
         return LoggedOutRedirect()
     
@@ -438,19 +433,35 @@ def SubmitRecordForm():
 
 
 @app.route("/reviewrecords")
-def ReviewRecord():
+def reviewrecordpage():
     if not IsAdmin():
         return AdminPageReject()
 
     submissions = db.session.execute(select(Submissions).order_by(Submissions.time.asc())).scalars().fetchmany(15)
-    for i in submissions:
-        print(i.id)
+    
 
     return render_template(
         "recordreviewlist.html",
         submissions=submissions,
-        title="Submission Review"
+        title="Submission Review List"
         )
+
+
+@app.route("/reviewrecord/<int:id>")
+def reviewrecord(id):
+    if not IsAdmin():
+        return AdminPageReject()
+
+    completionID = db.session().execute(select(Submissions.completion_id).where(Submissions.id == id)).scalar_one()
+    submissionDetails = db.session().execute(select(Completions).where(Completions.id == completionID)).scalar_one()
+
+    return render_template(
+        "recordreviewpage.html",
+        title="Review Submission",
+        back="/reviewrecords",
+        info=submissionDetails
+    )
+
 
 @app.errorhandler(404)
 def error404(e):

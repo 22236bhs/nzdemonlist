@@ -3,7 +3,7 @@
 
 <h1>Submission Reviewing</h1>
 <br>
-{% for submission in submission %}
+{% for submission in submissions %}
 <h2><a href="/reviewrecord/{{submission.id}}">{{submission.completion.player.name}} - {{submission.completion.level.name}}</a></h2>
 {% endfor %}
 

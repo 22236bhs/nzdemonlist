@@ -7,3 +7,9 @@ submissionFail = "Invalid Submission"
 submissionCompletionLinkMaxL = 100
 submissionSuccess = "Record Submitted Successfully"
 submissionAlreadyExists = "Record Already Exists"
+
+cbfOptions = {
+    0: "No CBF",
+    1: "CBS used (In-Game Version)",
+    2: "CBF used (Mod version)"
+}
