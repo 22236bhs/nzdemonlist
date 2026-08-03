@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, session, abort
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import String, Integer, ForeignKey, select, Table, Column, update, func
+from sqlalchemy import String, Integer, ForeignKey, select, Table, Column, update, func, text
 from werkzeug.security import check_password_hash, generate_password_hash
 import config
 import time
@@ -181,6 +181,9 @@ def AdminPageReject():
 @app.route("/")
 def list():
     data = db.session().execute(select(Levels).order_by(Levels.placement)).scalars()
+    conn = db.session()
+    conn.execute(update(Completions).where(Completions.id == 1).values(accepted=1))
+    conn.commit()
     return render_template("list.html", data=data, title="Demonlist")
 
 
@@ -438,12 +441,14 @@ def reviewrecordpage():
         return AdminPageReject()
 
     submissions = db.session.execute(select(Submissions).order_by(Submissions.time.asc())).scalars().fetchmany(15)
-    
-
+    message = GetMessage("/reviewrecords")
+    print(message)
     return render_template(
         "recordreviewlist.html",
         submissions=submissions,
-        title="Submission Review List"
+        title="Submission Review List",
+        back="/profile",
+        message=message
         )
 
 
@@ -454,13 +459,35 @@ def reviewrecord(id):
 
     completionID = db.session().execute(select(Submissions.completion_id).where(Submissions.id == id)).scalar_one()
     submissionDetails = db.session().execute(select(Completions).where(Completions.id == completionID)).scalar_one()
-
     return render_template(
         "recordreviewpage.html",
         title="Review Submission",
         back="/reviewrecords",
-        info=submissionDetails
+        info=submissionDetails,
+        subID=id,
+        cbfOptions=config.cbfOptions
     )
+
+
+@app.route("/reviewrecord/<int:subid>/<int:accepted>")
+def reviewrecordchoice(subid, accepted):
+    if not IsAdmin():
+        return AdminPageReject()
+
+    conn = db.session()
+    compID = conn.execute(select(Submissions.completion_id).where(Submissions.id == subid)).scalar()
+    if accepted:
+        conn.execute(update(Completions).where(Completions.id == compID).values(accepted=1))
+        SetMessage("/reviewrecords", "Record Accepted")
+    else:
+        conn.execute(text(f"DELETE FROM Completions WHERE id == {compID};"))
+        SetMessage("/reviewrecords", "Record Rejected")
+
+
+    conn.execute(text(f"DELETE FROM Submissions WHERE id == {subid};"))
+    conn.commit()
+    
+    return app.redirect("/reviewrecords")
 
 
 @app.errorhandler(404)

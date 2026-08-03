@@ -1,10 +1,21 @@
 {% extends "layout.html" %}
 {% block content %}
 
+{% if message %}
+<h2>{{message}}</h2>
+<br>
+{% endif %}
+
+{% if submissions %}
 <h1>Submission Reviewing</h1>
 <br>
+{% else %}
+<h1>No Submissions to be reviewed</h1>
+{% endif %}
+
 {% for submission in submissions %}
 <h2><a href="/reviewrecord/{{submission.id}}">{{submission.completion.player.name}} - {{submission.completion.level.name}}</a></h2>
 {% endfor %}
+
 
 {% endblock %}
