@@ -13,16 +13,6 @@ app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DATABASE}"
 db = SQLAlchemy(app)
 app.secret_key = "8T3198T31RG318F318G31F8137F8"
-
-
-def CalculatePoints(playerID) -> None:
-    conn = db.session()
-    user = conn.execute(select(Users).where(Users.id == playerID)).scalar_one()
-    totalPoints = 0
-    for completion in user.user_completions:
-        totalPoints += completion.level.points
-    conn.execute(update(Users).where(Users.id == playerID).values(points=totalPoints))
-    conn.commit()
     
 
 class Base(DeclarativeBase):
@@ -178,12 +168,31 @@ def AdminPageReject():
         )
 
 
+def PlayerAddLevelPoints(playerID, levelID) -> None:
+    conn = db.session()
+    user = conn.execute(select(Users).where(Users.id == playerID)).scalar_one()
+    level = conn.execute(select(Levels).where(Levels.id == levelID)).scalar_one()
+    newPoints = user.points + level.points
+    conn.execute(update(Users).where(Users.id == playerID).values(points=newPoints))
+    conn.commit()
+
+
+def CalculateAllPlayerPoints():
+    conn = db.session()
+    conn.execute(update(Users).values(points=0))
+    users = conn.execute(select(Users)).scalars()
+    for user in users:
+        points = 0
+        for comp in user.user_completions:
+            points += comp.level.points
+        conn.execute(update(Users).where(Users.id == user.id).values(points=points))
+
+    conn.commit()
+
+
 @app.route("/")
 def list():
     data = db.session().execute(select(Levels).order_by(Levels.placement)).scalars()
-    conn = db.session()
-    conn.execute(update(Completions).where(Completions.id == 1).values(accepted=1))
-    conn.commit()
     return render_template("list.html", data=data, title="Demonlist")
 
 
@@ -407,8 +416,6 @@ def submitrecordform():
         SetMessage("submission", config.submissionAlreadyExists)
         return app.redirect("/submission")
     
-    nextIndex = len(db.session.execute(select(Completions).where(Completions.level_id == levelID)).fetchall()) + 1
-
 
     completion = Completions(
         player_id=GetUser().id,
@@ -417,7 +424,7 @@ def submitrecordform():
         FPS=fps,
         CBF=cbf,
         accepted=0,
-        index=nextIndex
+        index=0
         )
     
     db.session.add(completion) 
@@ -476,8 +483,11 @@ def reviewrecordchoice(subid, accepted):
 
     conn = db.session()
     compID = conn.execute(select(Submissions.completion_id).where(Submissions.id == subid)).scalar()
+    completion = conn.execute(select(Completions).where(Completions.id == compID)).scalar()
     if accepted:
-        conn.execute(update(Completions).where(Completions.id == compID).values(accepted=1))
+        nextIndex = db.session.execute(select(Completions.index).where(Completions.level_id == completion.level.id).order_by(Completions.index.desc())).scalar() + 1
+        conn.execute(update(Completions).where(Completions.id == compID).values(accepted=1, index=nextIndex))
+        PlayerAddLevelPoints(completion.player_id, completion.level_id)
         SetMessage("/reviewrecords", "Record Accepted")
     else:
         conn.execute(text(f"DELETE FROM Completions WHERE id == {compID};"))
