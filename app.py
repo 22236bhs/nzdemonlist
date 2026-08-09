@@ -364,16 +364,20 @@ def loginregister():
 def submitrecord():
     if not IsLoggedIn():
         return LoggedOutRedirect()
+
+    ids = [i.level.id for i in GetUser().user_completions]
     
-    levels = db.session.execute(select(Levels).order_by(Levels.placement)).scalars()
+    levels = db.session.execute(select(Levels).order_by(Levels.placement).where(Levels.id)).scalars()
+
+    notCompletedLevels = [i for i in levels if (i.id not in ids)]
 
     return render_template(
         "record_submission.html",
         title="Submit Record",
         back="/profile",
-        levels=levels,
-        message = GetMessage("submission"),
-        linkMaxL = config.submissionCompletionLinkMaxL,
+        levels=notCompletedLevels,
+        message=GetMessage("submission"),
+        linkMaxL=config.submissionCompletionLinkMaxL,
         cbfOptions=config.cbfOptions
     )
 
