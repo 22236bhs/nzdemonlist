@@ -367,15 +367,15 @@ def submitrecord():
 
     ids = [i.level.id for i in GetUser().user_completions]
     
-    levels = db.session.execute(select(Levels).order_by(Levels.placement).where(Levels.id)).scalars()
+    levels = db.session.execute(select(Levels).order_by(Levels.placement)).scalars()
 
-    notCompletedLevels = [i for i in levels if (i.id not in ids)]
+    levels = [[i, 1] if i.id in ids else [i, 0] for i in levels ]
 
     return render_template(
         "record_submission.html",
         title="Submit Record",
         back="/profile",
-        levels=notCompletedLevels,
+        levels=levels,
         message=GetMessage("submission"),
         linkMaxL=config.submissionCompletionLinkMaxL,
         cbfOptions=config.cbfOptions

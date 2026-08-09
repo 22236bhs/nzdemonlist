@@ -15,7 +15,7 @@
     <br><br>
     <select name="level">
         {% for level in levels %}
-        <option value="{{level.id}}">{{level.placement}}. {{level.name}}</option>
+        <option value="{{level[0].id}}">{{level[0].placement}}. {{level[0].name}}{% if level[1] %} (Already Submitted){% endif %}</option>
         {% endfor %}
     </select>
     <br><br><br>
