@@ -2,6 +2,8 @@
 
 {% block content %}
 
+<h1 class="title-text">Leaderboard</h1>
+
 {% for player in players %}
 
 <h2 class="leaderboard-player"><a href="/leaderboard/{{player.id}}">{{player.name}} - {{player.points}}</a></h2>

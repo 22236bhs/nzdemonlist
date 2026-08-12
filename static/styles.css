@@ -18,7 +18,7 @@ body{
     background-color: #313131;
     margin: 0;
     padding: 1vw;
-    padding-top: 10px;
+    padding-top: 1px;
     min-height: 81vh;
 }
 
@@ -92,6 +92,7 @@ label{
 
 .level-thumbnail{
     width: 200px;
+    border-radius: 5px;
 }
 
 .level-info{
@@ -106,6 +107,8 @@ label{
     text-align: center;
     align-items: center;
     border-radius: 15px;
+    padding-top: 15px;
+    padding-bottom: 15px;
 }
 
 .error-message{
@@ -113,5 +116,14 @@ label{
 }
 
 .success-message{
-    color: rgb(0, 170, 0);
+    color: rgb(0, 219, 0);
+}
+
+.title-text{
+    font-size: 70px;
+    font-weight: bold;
+    text-align: center;
+    padding-top: 30px;
+    padding-bottom: 30px;
+    margin: 0;
 }

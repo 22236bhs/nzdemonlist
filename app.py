@@ -102,7 +102,7 @@ def IsLoggedIn():
         return False
 
 
-def LogInUser(userID):
+def LogInUser(userID : int):
     session["user"] = userID
     session["loggedin"] = True
 
@@ -112,10 +112,10 @@ def SignOutUser():
     session["loggedin"] = False
 
 
-def SetMessage(route : str, message : str):
+def SetMessage(route : str, message : str, error : bool = True):
     if not "message" in session:
         session["message"] = {}
-    session["message"][route] = message
+    session["message"][route] = [message, error]
     session.modified = True
 
 
@@ -131,7 +131,7 @@ def GetMessage(route : str):
         return ""
 
 
-def PushError(number, code):
+def PushError(number : int, code : str):
     return render_template("error_page.html",
                            error_code=number,
                            title=f"{number} Error",
@@ -178,7 +178,7 @@ def AdminPageReject():
         )
 
 
-def PlayerAddLevelPoints(playerID, levelID) -> None:
+def PlayerAddLevelPoints(playerID : int, levelID : int) -> None:
     conn = db.session()
     user = conn.execute(select(Users).where(Users.id == playerID)).scalar_one()
     level = conn.execute(select(Levels).where(Levels.id == levelID)).scalar_one()
@@ -220,7 +220,6 @@ def leaderboard():
         "leaderboard.html",
         players=players,
         title="Leaderboard",
-        back="/"
     )
 
 
@@ -244,14 +243,12 @@ def profile():
             "profile_logged_in.html",
             user=GetUser(),
             title="Profile",
-            back="/",
             isadmin=IsAdmin()
         )
     else:
         return render_template(
             "profile_logged_out.html",
             title="Profile",
-            back="/",
         )
 
 
@@ -451,7 +448,7 @@ def submitrecordform():
 
     db.session.commit()
 
-    SetMessage("submission", config.submissionSuccess)
+    SetMessage("submission", config.submissionSuccess, False)
     
     return app.redirect("/submission")
 
@@ -477,9 +474,14 @@ def reviewrecordpage():
 def reviewrecord(id):
     if not IsAdmin():
         return AdminPageReject()
+    
+    completionID = db.session().execute(select(Submissions.completion_id).where(Submissions.id == id)).scalar_one_or_none()
 
-    completionID = db.session().execute(select(Submissions.completion_id).where(Submissions.id == id)).scalar_one()
+    if not completionID:
+        abort(404)
+    
     submissionDetails = db.session().execute(select(Completions).where(Completions.id == completionID)).scalar_one()
+
     return render_template(
         "recordreviewpage.html",
         title="Review Submission",
@@ -496,13 +498,17 @@ def reviewrecordchoice(subid, accepted):
         return AdminPageReject()
 
     conn = db.session()
-    compID = conn.execute(select(Submissions.completion_id).where(Submissions.id == subid)).scalar()
+    compID = conn.execute(select(Submissions.completion_id).where(Submissions.id == subid)).scalar_one_or_none()
+
+    if not compID:
+        abort(404)
+
     completion = conn.execute(select(Completions).where(Completions.id == compID)).scalar()
     if accepted:
         nextIndex = db.session.execute(select(Completions.index).where(Completions.level_id == completion.level.id).order_by(Completions.index.desc())).scalar() + 1
         conn.execute(update(Completions).where(Completions.id == compID).values(accepted=1, index=nextIndex))
         PlayerAddLevelPoints(completion.player_id, completion.level_id)
-        SetMessage("/reviewrecords", "Record Accepted")
+        SetMessage("/reviewrecords", "Record Accepted", False)
     else:
         conn.execute(text(f"DELETE FROM Completions WHERE id == {compID};"))
         SetMessage("/reviewrecords", "Record Rejected")
