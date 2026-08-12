@@ -107,3 +107,11 @@ label{
     align-items: center;
     border-radius: 15px;
 }
+
+.error-message{
+    color: red;
+}
+
+.success-message{
+    color: rgb(0, 170, 0);
+}

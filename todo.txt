@@ -1,8 +1,7 @@
 To do:
 - Make wireframes
-- Admin accounts
-- Record accepting
 
 
 To do sprint 3:
 - Make signup include email
+- navbar signup / login

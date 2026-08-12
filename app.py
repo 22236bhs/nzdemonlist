@@ -146,6 +146,16 @@ def LoggedOutRedirect():
 
 
 def IsInt(x):
+#    if not x:
+#        return False
+#    if not isinstance(x, int):
+#        char = "-0123456789."
+#
+ #       for i in x:
+
+  #  else:
+   #     return True
+
     try:
         x = int(x)
     except:
