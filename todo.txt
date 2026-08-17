@@ -1,7 +1,8 @@
-To do:
-- Make wireframes
+- Sprint 2 testing + review
 
-
-To do sprint 3:
-- Make signup include email
-- navbar signup / login
+- Start Sprint 3 
+  goals: 
+    -- finished wireframes and implemented them. 
+    -- email login
+    -- actual nz players and levels
+    -- can add other admins
