@@ -4,10 +4,31 @@
 
 <h1 class="title-text">Leaderboard</h1>
 
-{% for player in players %}
-
-<h2 class="leaderboard-player"><a href="/leaderboard/{{player.id}}">{{player.name}} - {{player.points}}</a></h2>
-
+{% for i in range(players|length) %}
+<a href="/leaderboard/{{players[i][0].id}}">
+    <div class="player-card">
+        <span>
+            {% if i == 0 %}
+            <p class="player-card-text player-card-top-one-player">#{{i + 1}}</p>
+            {% elif i == 1 %}
+            <p class="player-card-text player-card-top-two-player">#{{i + 1}}</p>
+            {% elif i == 2 %}
+            <p class="player-card-text player-card-top-three-player">#{{i + 1}}</p>
+            {% else %}
+            <p class="player-card-text">#{{i + 1}}</p>
+            {% endif %}
+            <p class="player-card-text">| {{players[i][0].name}}</p>
+        </span>
+        
+        <p class="player-card-text">Hardest: {{players[i][1]}}</p>
+        <div class="player-card-details-grid">
+            <p class="player-card-text">{{players[i][0].points}} Points</p>
+            <p class="player-card-text">
+                {{players[i][2]}} Extreme{% if players[i][2] != 1 %}s{% endif %}
+            </p>
+        </div>
+    </div>
+</a>
 {% endfor %}
 
 {% endblock %}

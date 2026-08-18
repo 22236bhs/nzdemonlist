@@ -67,10 +67,6 @@ a{
     font-size: 30px;
 }
 
-.leaderboard-player{
-    font-size: 50px;
-}
-
 .profile-logged-out{
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -109,6 +105,45 @@ label{
     border-radius: 15px;
     padding-top: 15px;
     padding-bottom: 15px;
+}
+
+.player-card{
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    background-color: #242424;
+    height: 120px;
+    text-align: center;
+    align-items: center;
+    font-size: 35px;
+    gap: 10px;
+    margin-bottom: 30px;
+    border-radius: 5px;
+}
+
+.player-card-top-one-player{
+    color: #FFD700;
+}
+
+.player-card-top-two-player{
+    color: #C0C0C0;
+}
+
+.player-card-top-three-player{
+    color: #CD7F32;
+}
+
+.player-card-text{
+    margin: 0;
+    display: inline;
+}
+
+.player-card-details-grid{
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    gap: 20px;
+    font-size: 25px;
+    text-align: center;
+    align-items: center;
 }
 
 .error-message{

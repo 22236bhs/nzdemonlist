@@ -221,15 +221,28 @@ def level(id):
 
 @app.route("/leaderboard")
 def leaderboard():
-    players = db.session().execute(
+    conn = db.session()
+    players = conn.execute(
         select(Users).where(
             select(Completions).where(
                 Completions.player_id == Users.id).exists()
-                ).order_by(Users.points.desc())).scalars()
+                ).order_by(Users.points.desc())).fetchall()
+
+    playersFinal = []
+    for player in players:
+        beaten = conn.execute(text(f'''SELECT Levels.name
+                                FROM Levels
+                                WHERE Levels.id in (
+                                    SELECT level_id
+                                    FROM Completions
+                                    WHERE player_id = {player[0].id})
+                                ORDER BY Levels.placement ASC;''')).fetchall()
+        
+        playersFinal.append([player[0], beaten[0][0], len(beaten)])
 
     return render_template(
         "leaderboard.html",
-        players=players,
+        players=playersFinal,
         title="Leaderboard",
     )
 
