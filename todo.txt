@@ -1,10 +1,13 @@
-- Sprint 2 testing + review
-
-- Start Sprint 3 
+Sprint 3
   goals: 
     -- finished wireframes and implemented them. 
-    -- email login
-    -- actual nz players and levels
-    -- can add other admins
-    -- min password and username lengths
     -- code comments bruh
+    -- actual nz players and levels
+    -- level adding
+    -- can add other admins
+    -- min password and username lengths    
+    -- email login
+  
+notes:
+- Get lots of feedback even if it's useless
+- Ask mr rodkiss about database integrity and testing. 
