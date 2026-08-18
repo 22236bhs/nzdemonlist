@@ -6,3 +6,5 @@
     -- email login
     -- actual nz players and levels
     -- can add other admins
+    -- min password and username lengths
+    -- code comments bruh

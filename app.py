@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, session, abort
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import String, Integer, ForeignKey, select, Table, Column, update, func, text
+from sqlalchemy import String, Integer, ForeignKey, select, update, text
 from werkzeug.security import check_password_hash, generate_password_hash
 import config
 import time
@@ -13,7 +13,7 @@ app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DATABASE}"
 db = SQLAlchemy(app)
 app.secret_key = "8T3198T31RG318F318G31F8137F8"
-    
+
 
 class Base(DeclarativeBase):
     pass
@@ -21,74 +21,81 @@ class Base(DeclarativeBase):
 
 class Completions(Base):
     __tablename__ = "Completions"
-    id : Mapped[int] = mapped_column(primary_key=True)
-    player_id : Mapped[int] = mapped_column(ForeignKey("Users.id"))
-    player : Mapped["Users"] = relationship(back_populates="user_completions")
-    level_id : Mapped[int] = mapped_column(ForeignKey("Levels.id"))
-    level : Mapped["Levels"] = relationship(primaryjoin="Completions.level_id == Levels.id",
-                                            back_populates="level_completions")
-    completion_link : Mapped[str] = mapped_column(String())
-    FPS : Mapped[int] = mapped_column(Integer())
-    CBF : Mapped[int] = mapped_column(Integer())
-    accepted : Mapped[int] = mapped_column(Integer())
-    index : Mapped[int] = mapped_column(Integer())
+    id: Mapped[int] = mapped_column(primary_key=True)
+    player_id: Mapped[int] = mapped_column(ForeignKey("Users.id"))
+    player: Mapped["Users"] = relationship(back_populates="user_completions")
+    level_id: Mapped[int] = mapped_column(ForeignKey("Levels.id"))
+    level: Mapped["Levels"] = relationship(
+        primaryjoin="Completions.level_id == Levels.id",
+        back_populates="level_completions")
+    completion_link: Mapped[str] = mapped_column(String())
+    FPS: Mapped[int] = mapped_column(Integer())
+    CBF: Mapped[int] = mapped_column(Integer())
+    accepted: Mapped[int] = mapped_column(Integer())
+    index: Mapped[int] = mapped_column(Integer())
 
 
 class Users(Base):
     __tablename__ = "Users"
-    id : Mapped[int] = mapped_column(primary_key=True)
-    name : Mapped[str] = mapped_column(String())
-    points : Mapped[int] = mapped_column(Integer())
-    password_hash : Mapped[str] = mapped_column(String())
-    admin : Mapped[int] = mapped_column(Integer())
-    user_completions : Mapped[list["Completions"]] = relationship(back_populates="player")
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String())
+    points: Mapped[int] = mapped_column(Integer())
+    password_hash: Mapped[str] = mapped_column(String())
+    admin: Mapped[int] = mapped_column(Integer())
+    user_completions: Mapped[list["Completions"]] = relationship(
+        back_populates="player")
 
 
 class Levels(Base):
     __tablename__ = "Levels"
-    id : Mapped[int] = mapped_column(primary_key=True)
-    name : Mapped[str] = mapped_column(String())
-    placement : Mapped[int] = mapped_column(Integer())
-    verifier_id : Mapped[int] = mapped_column(ForeignKey("Users.id"))
-    verifier : Mapped["Users"] = relationship(primaryjoin="Levels.verifier_id == Users.id")
-    verification_id : Mapped[int] = mapped_column(ForeignKey("Completions.id"))
-    verification : Mapped["Completions"] = relationship(primaryjoin="Levels.verification_id == Completions.id")
-    publisher_id : Mapped[int] = mapped_column(ForeignKey("Users.id"))
-    publisher : Mapped["Users"] = relationship(primaryjoin="Levels.publisher_id == Users.id")
-    level_completions : Mapped[list["Completions"]] = relationship(primaryjoin="Completions.level_id == Levels.id",
-                                                                   back_populates="level")
-    points : Mapped[int] = mapped_column(Integer())
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String())
+    placement: Mapped[int] = mapped_column(Integer())
+    verifier_id: Mapped[int] = mapped_column(ForeignKey("Users.id"))
+    verifier: Mapped["Users"] = relationship(
+        primaryjoin="Levels.verifier_id == Users.id")
+    verification_id: Mapped[int] = mapped_column(ForeignKey("Completions.id"))
+    verification: Mapped["Completions"] = relationship(
+        primaryjoin="Levels.verification_id == Completions.id")
+    publisher_id: Mapped[int] = mapped_column(ForeignKey("Users.id"))
+    publisher: Mapped["Users"] = relationship(
+        primaryjoin="Levels.publisher_id == Users.id")
+    level_completions: Mapped[list["Completions"]] = relationship(
+        primaryjoin="Completions.level_id == Levels.id",
+        back_populates="level")
+    points: Mapped[int] = mapped_column(Integer())
 
 
 class Submissions(Base):
     __tablename__ = "Submissions"
-    id : Mapped[int] = mapped_column(primary_key=True)
-    completion_id : Mapped[int] = mapped_column(ForeignKey("Completions.id"))
-    completion : Mapped["Completions"] = relationship()
-    time : Mapped[int] = mapped_column(Integer())
+    id: Mapped[int] = mapped_column(primary_key=True)
+    completion_id: Mapped[int] = mapped_column(ForeignKey("Completions.id"))
+    completion: Mapped["Completions"] = relationship()
+    time: Mapped[int] = mapped_column(Integer())
 
 
 class AdminRanks(Base):
     __tablename__ = "Admin Ranks"
-    id : Mapped[int] = mapped_column(primary_key=True)
-    name : Mapped[str] = mapped_column(String())
-    description : Mapped[str] = mapped_column(String())
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String())
+    description: Mapped[str] = mapped_column(String())
 
 
 class Admins(Base):
     __tablename__ = "Admins"
-    id : Mapped[int] = mapped_column(primary_key=True)
-    rank_id : Mapped["int"] = mapped_column(ForeignKey("Admin Ranks.id"))
-    rank : Mapped["AdminRanks"] = relationship()
-    player_id : Mapped["int"] = mapped_column(ForeignKey("Users.id"))
-    player : Mapped["Users"] = relationship()
+    id: Mapped[int] = mapped_column(primary_key=True)
+    rank_id: Mapped["int"] = mapped_column(ForeignKey("Admin Ranks.id"))
+    rank: Mapped["AdminRanks"] = relationship()
+    player_id: Mapped["int"] = mapped_column(ForeignKey("Users.id"))
+    player: Mapped["Users"] = relationship()
 
 
 def GetUser():
     if "user" in session:
         userID = session.get("user")
         if IsLoggedIn():
-            return db.session.execute(select(Users).where(Users.id == userID)).scalar_one_or_none()
+            return db.session.execute(
+                select(Users).where(Users.id == userID)).scalar_one_or_none()
         else:
             return False
     else:
@@ -102,7 +109,7 @@ def IsLoggedIn():
         return False
 
 
-def LogInUser(userID : int):
+def LogInUser(userID: int):
     session["user"] = userID
     session["loggedin"] = True
 
@@ -112,14 +119,14 @@ def SignOutUser():
     session["loggedin"] = False
 
 
-def SetMessage(route : str, message : str, error : bool = True):
-    if not "message" in session:
+def SetMessage(route: str, message: str, error: bool = True):
+    if "message" not in session:
         session["message"] = {}
     session["message"][route] = [message, error]
     session.modified = True
 
 
-def GetMessage(route : str):
+def GetMessage(route: str):
     if "message" in session:
         if route in session["message"]:
             message = session["message"][route]
@@ -131,7 +138,7 @@ def GetMessage(route : str):
         return ""
 
 
-def PushError(number : int, code : str):
+def PushError(number: int, code: str):
     return render_template("error_page.html",
                            error_code=number,
                            title=f"{number} Error",
@@ -146,19 +153,9 @@ def LoggedOutRedirect():
 
 
 def IsInt(x):
-#    if not x:
-#        return False
-#    if not isinstance(x, int):
-#        char = "-0123456789."
-#
- #       for i in x:
-
-  #  else:
-   #     return True
-
     try:
         x = int(x)
-    except:
+    except ValueError:
         return False
     else:
         return True
@@ -166,7 +163,9 @@ def IsInt(x):
 
 def IsAdmin():
     if IsLoggedIn():
-        if db.session.execute(select(Admins).where(Admins.player_id == GetUser().id)).scalar_one_or_none():
+        if db.session.execute(
+            select(Admins).where(
+                Admins.player_id == GetUser().id)).scalar_one_or_none():
             return True
     return False
 
@@ -178,12 +177,15 @@ def AdminPageReject():
         )
 
 
-def PlayerAddLevelPoints(playerID : int, levelID : int) -> None:
+def PlayerAddLevelPoints(playerID: int, levelID: int) -> None:
     conn = db.session()
-    user = conn.execute(select(Users).where(Users.id == playerID)).scalar_one()
-    level = conn.execute(select(Levels).where(Levels.id == levelID)).scalar_one()
+    user = conn.execute(
+        select(Users).where(Users.id == playerID)).scalar_one()
+    level = conn.execute(
+        select(Levels).where(Levels.id == levelID)).scalar_one()
     newPoints = user.points + level.points
-    conn.execute(update(Users).where(Users.id == playerID).values(points=newPoints))
+    conn.execute(
+        update(Users).where(Users.id == playerID).values(points=newPoints))
     conn.commit()
 
 
@@ -195,27 +197,36 @@ def CalculateAllPlayerPoints():
         points = 0
         for comp in user.user_completions:
             points += comp.level.points
-        conn.execute(update(Users).where(Users.id == user.id).values(points=points))
+        conn.execute(
+            update(Users).where(Users.id == user.id).values(points=points))
 
     conn.commit()
 
 
 @app.route("/")
 def list():
-    data = db.session().execute(select(Levels).order_by(Levels.placement)).scalars()
+    data = db.session().execute(
+        select(Levels).order_by(Levels.placement)).scalars()
     return render_template("list.html", data=data, title="Demonlist")
 
 
 @app.route("/level/<int:id>")
 def level(id):
-    data = db.session().execute(select(Levels).where(Levels.id == id)).scalar_one_or_none()
+    data = db.session().execute(
+        select(Levels).where(Levels.id == id)).scalar_one_or_none()
     if not data:
         abort(404)
     return render_template("level.html", level=data, title=data.name, back="/")
 
+
 @app.route("/leaderboard")
 def leaderboard():
-    players = db.session().execute(select(Users).where(select(Completions).where(Completions.player_id == Users.id).exists()).order_by(Users.points.desc())).scalars()
+    players = db.session().execute(
+        select(Users).where(
+            select(Completions).where(
+                Completions.player_id == Users.id).exists()
+                ).order_by(Users.points.desc())).scalars()
+
     return render_template(
         "leaderboard.html",
         players=players,
@@ -225,7 +236,9 @@ def leaderboard():
 
 @app.route("/leaderboard/<int:id>")
 def player(id):
-    playerData = db.session().execute(select(Users).where(Users.id == id)).scalar_one_or_none()
+    playerData = db.session().execute(
+        select(Users).where(Users.id == id)).scalar_one_or_none()
+
     if not playerData:
         abort(404)
     return render_template(
@@ -262,7 +275,7 @@ def logout():
 def signup():
     if IsLoggedIn():
         return app.redirect("/profile")
-    
+
     message = GetMessage("signup")
 
     return render_template(
@@ -289,29 +302,35 @@ def signupregister():
     if (not username) or (len(username) > config.usernameMaxLength):
         SetMessage("signup", "Invalid Input")
         success = False
-    
-    
+
     elif (not password) or (len(password) > config.passwordMaxLength):
         SetMessage("signup", "Invalid Input")
         success = False
 
-    elif username in db.session().execute(select(Users.name).where(Users.name == username)).scalars():
+    elif username in db.session().execute(
+            select(Users.name).where(Users.name == username)).scalars():
         SetMessage("signup", config.usernameTaken)
         success = False
-    
+
     elif confirmPassword != password:
         SetMessage("signup", config.confirmPasswordFail)
         success = False
-    
 
     if not success:
         return app.redirect("/signup")
-    
+
     else:
         password_hash = generate_password_hash(password)
-        db.session().add(Users(name=username, password_hash=password_hash, admin=0, points=0))
+
+        db.session().add(Users(
+            name=username,
+            password_hash=password_hash,
+            admin=0,
+            points=0))
+
         db.session().commit()
-        LogInUser(db.session().execute(select(Users).where(Users.name == username)).scalar_one().id)
+        LogInUser(db.session().execute(
+            select(Users).where(Users.name == username)).scalar_one().id)
         return app.redirect("/profile")
 
 
@@ -319,7 +338,7 @@ def signupregister():
 def login():
     if IsLoggedIn():
         return app.redirect("/profile")
-    
+
     message = GetMessage("login")
 
     return render_template(
@@ -336,7 +355,7 @@ def login():
 def loginregister():
     if IsLoggedIn():
         return app.redirect("/profile")
-    
+
     success = True
 
     username = request.form.get("username")
@@ -345,20 +364,21 @@ def loginregister():
     if (not username) or (len(username) > config.usernameMaxLength):
         SetMessage("login", "Invalid Input")
         success = False
-    
+
     elif (not password) or (len(password) > config.passwordMaxLength):
         SetMessage("login", "Invalid Input")
         success = False
-    
 
     if not success:
         return app.redirect("/login")
     else:
-        user = db.session().execute(select(Users).where(Users.name == username)).scalar_one_or_none()
+        user = db.session().execute(
+            select(Users).where(Users.name == username)).scalar_one_or_none()
+
         if not user:
             SetMessage("login", config.loginFail)
             return app.redirect("/login")
-           
+
         else:
             if check_password_hash(user.password_hash, password):
                 LogInUser(user.id)
@@ -373,10 +393,11 @@ def submitrecord():
         return LoggedOutRedirect()
 
     ids = [i.level.id for i in GetUser().user_completions]
-    
-    levels = db.session.execute(select(Levels).order_by(Levels.placement)).scalars()
 
-    levels = [[i, 1] if i.id in ids else [i, 0] for i in levels ]
+    levels = db.session.execute(
+        select(Levels).order_by(Levels.placement)).scalars()
+
+    levels = [[i, 1] if i.id in ids else [i, 0] for i in levels]
 
     return render_template(
         "record_submission.html",
@@ -393,7 +414,7 @@ def submitrecord():
 def submitrecordform():
     if not IsLoggedIn():
         return LoggedOutRedirect()
-    
+
     levelID = request.form.get("level")
     completionLink = request.form.get("completion_link")
     fps = request.form.get("FPS")
@@ -403,30 +424,38 @@ def submitrecordform():
 
     if (not levelID) or (not completionLink) or (not fps) or (not cbf):
         success = False
-    
+
     elif len(completionLink) > config.submissionCompletionLinkMaxL:
         success = False
-    
+
     elif not IsInt(cbf):
         success = False
 
-    elif int(cbf) < 0 or int(cbf) > 2:
+    elif not int(cbf) in config.cbfOptions:
         success = False
-    
+
     elif not IsInt(fps):
         success = False
-    
+
     elif int(fps) < 1:
+        success = False
+
+    elif not db.session.execute(
+            select(Levels).where(Levels.id == levelID)).scalar_one_or_none():
+
         success = False
 
     if not success:
         SetMessage("submission", config.submissionFail)
         return app.redirect("/submission")
 
-    if db.session.execute(select(Completions).where(Completions.level_id == levelID).where(Completions.player_id == GetUser().id)).scalar_one_or_none():
+    if db.session.execute(
+        select(Completions).where(
+            Completions.level_id == levelID).where
+            (Completions.player_id == GetUser().id)).scalar_one_or_none():
+
         SetMessage("submission", config.submissionAlreadyExists)
         return app.redirect("/submission")
-    
 
     completion = Completions(
         player_id=GetUser().id,
@@ -437,10 +466,13 @@ def submitrecordform():
         accepted=0,
         index=0
         )
-    
-    db.session.add(completion) 
 
-    completionID = db.session.execute(select(Completions.id).where(Completions.level_id == levelID).where(Completions.player_id == GetUser().id)).first()[0]
+    db.session.add(completion)
+
+    completionID = db.session.execute(
+        select(Completions.id).where(
+            Completions.level_id == levelID).where(
+                Completions.player_id == GetUser().id)).first()[0]
 
     submission = Submissions(completion_id=completionID, time=time.time())
 
@@ -449,7 +481,7 @@ def submitrecordform():
     db.session.commit()
 
     SetMessage("submission", config.submissionSuccess, False)
-    
+
     return app.redirect("/submission")
 
 
@@ -458,7 +490,11 @@ def reviewrecordpage():
     if not IsAdmin():
         return AdminPageReject()
 
-    submissions = db.session.execute(select(Submissions).order_by(Submissions.time.asc())).scalars().fetchmany(15)
+    submissions = db.session.execute(
+        select(Submissions).order_by(
+            Submissions.time.asc())).scalars().fetchmany(
+                config.maxSubmissionDisplayCount)
+
     message = GetMessage("/reviewrecords")
     print(message)
     return render_template(
@@ -474,13 +510,17 @@ def reviewrecordpage():
 def reviewrecord(id):
     if not IsAdmin():
         return AdminPageReject()
-    
-    completionID = db.session().execute(select(Submissions.completion_id).where(Submissions.id == id)).scalar_one_or_none()
+
+    completionID = db.session().execute(
+        select(Submissions.completion_id).where(
+            Submissions.id == id)).scalar_one_or_none()
 
     if not completionID:
         abort(404)
-    
-    submissionDetails = db.session().execute(select(Completions).where(Completions.id == completionID)).scalar_one()
+
+    submissionDetails = db.session().execute(
+        select(Completions).where(
+            Completions.id == completionID)).scalar_one()
 
     return render_template(
         "recordreviewpage.html",
@@ -498,31 +538,45 @@ def reviewrecordchoice(subid, accepted):
         return AdminPageReject()
 
     conn = db.session()
-    compID = conn.execute(select(Submissions.completion_id).where(Submissions.id == subid)).scalar_one_or_none()
+    compID = conn.execute(
+        select(Submissions.completion_id).where(
+            Submissions.id == subid)).scalar_one_or_none()
 
     if not compID:
         abort(404)
 
-    completion = conn.execute(select(Completions).where(Completions.id == compID)).scalar()
+    completion = conn.execute(
+        select(Completions).where(Completions.id == compID)).scalar()
+
     if accepted:
-        nextIndex = db.session.execute(select(Completions.index).where(Completions.level_id == completion.level.id).order_by(Completions.index.desc())).scalar() + 1
-        conn.execute(update(Completions).where(Completions.id == compID).values(accepted=1, index=nextIndex))
+        nextIndex = db.session.execute(
+            select(Completions.index).where(
+                Completions.level_id == completion.level.id).order_by(
+                    Completions.index.desc())).scalar() + 1
+
+        conn.execute(update(Completions).where(
+            Completions.id == compID).values(accepted=1, index=nextIndex))
+
         PlayerAddLevelPoints(completion.player_id, completion.level_id)
         SetMessage("/reviewrecords", "Record Accepted", False)
     else:
         conn.execute(text(f"DELETE FROM Completions WHERE id == {compID};"))
         SetMessage("/reviewrecords", "Record Rejected")
 
-
     conn.execute(text(f"DELETE FROM Submissions WHERE id == {subid};"))
     conn.commit()
-    
+
     return app.redirect("/reviewrecords")
 
 
 @app.errorhandler(404)
 def error404(e):
     return PushError(404, e)
+
+
+@app.errorhandler(505)
+def error505(e):
+    return PushError(505, e)
 
 
 if __name__ == "__main__":

@@ -7,6 +7,7 @@ submissionFail = "Invalid Submission"
 submissionCompletionLinkMaxL = 100
 submissionSuccess = "Record Submitted Successfully"
 submissionAlreadyExists = "Submission Already Exists"
+maxSubmissionDisplayCount = 15
 
 cbfOptions = {
     0: "No CBF",
