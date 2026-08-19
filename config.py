@@ -1,5 +1,7 @@
 usernameMaxLength = 20
+usernameMinLength = 4
 passwordMaxLength = 20
+passwordMinLength = 8
 usernameTaken = "Username already taken"
 confirmPasswordFail = "Confirm Password field does not match Password"
 loginFail = "Incorrect Username or Password"

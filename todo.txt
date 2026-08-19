@@ -5,7 +5,6 @@ Sprint 3
     -- level adding
     -- can add other admins
     -- min password and username lengths    
-    -- email login
   
 notes:
 - Get lots of feedback even if it's useless

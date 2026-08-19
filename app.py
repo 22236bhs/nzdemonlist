@@ -224,6 +224,10 @@ def CalculateAllPlayerPoints():
     conn.commit()
 
 
+def IsValidLength(text: str, maxL: int, minL: int):
+    return (len(text) <= maxL and len(text) >= minL)
+
+
 # Demonlist page
 @app.route("/")
 def list():
@@ -335,7 +339,9 @@ def signup():
         back="/profile",
         message=message,
         userMaxL=config.usernameMaxLength,
-        passMaxL=config.passwordMaxLength
+        userMinL=config.usernameMinLength,
+        passMaxL=config.passwordMaxLength,
+        passMinL=config.passwordMinLength
     )
 
 
@@ -352,11 +358,18 @@ def signupregister():
     confirmPassword = request.form.get("confirm-password")
 
     # Checks if the form inputs are valid before processing
-    if (not username) or (len(username) > config.usernameMaxLength):
+
+    if (not username) or (not IsValidLength(username,
+                                            config.usernameMaxLength,
+                                            config.usernameMinLength)):
+
         SetMessage("signup", "Invalid Input")
         success = False
 
-    elif (not password) or (len(password) > config.passwordMaxLength):
+    elif (not password) or (not IsValidLength(password,
+                                              config.passwordMaxLength,
+                                              config.passwordMinLength)):
+
         SetMessage("signup", "Invalid Input")
         success = False
 
@@ -405,7 +418,9 @@ def login():
         back="/profile",
         message=message,
         userMaxL=config.usernameMaxLength,
-        passMaxL=config.passwordMaxLength
+        userMinL=config.usernameMinLength,
+        passMaxL=config.passwordMaxLength,
+        passMinL=config.passwordMinLength
     )
 
 
@@ -421,15 +436,20 @@ def loginregister():
     password = request.form.get("password")
 
     # Check that the form inputs are valid before processing
-    if (not username) or (len(username) > config.usernameMaxLength):
-        SetMessage("login", "Invalid Input")
+    if (not username) or (not IsValidLength(username,
+                                            config.usernameMaxLength,
+                                            config.usernameMinLength)):
+
         success = False
 
-    elif (not password) or (len(password) > config.passwordMaxLength):
-        SetMessage("login", "Invalid Input")
+    elif (not password) or (not IsValidLength(password,
+                                              config.passwordMaxLength,
+                                              config.passwordMinLength)):
+
         success = False
 
     if not success:
+        SetMessage("login", "Invalid Input")
         return app.redirect("/login")
     else:
         user = db.session().execute(
