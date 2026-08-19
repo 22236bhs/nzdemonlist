@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy import String, Integer, ForeignKey, select, update, text
 from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.utils import secure_filename
 import config
 import time
 
@@ -41,7 +42,9 @@ class Users(Base):
     name: Mapped[str] = mapped_column(String())
     points: Mapped[int] = mapped_column(Integer())
     password_hash: Mapped[str] = mapped_column(String())
-    admin: Mapped[int] = mapped_column(Integer())
+    admin_rank_id: Mapped[int] = mapped_column(ForeignKey("Admin Ranks.id"))
+    admin_rank: Mapped["AdminRanks"] = relationship(
+        back_populates="children",)
     user_completions: Mapped[list["Completions"]] = relationship(
         back_populates="player")
 
@@ -79,15 +82,7 @@ class AdminRanks(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String())
     description: Mapped[str] = mapped_column(String())
-
-
-class Admins(Base):
-    __tablename__ = "Admins"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    rank_id: Mapped["int"] = mapped_column(ForeignKey("Admin Ranks.id"))
-    rank: Mapped["AdminRanks"] = relationship()
-    player_id: Mapped["int"] = mapped_column(ForeignKey("Users.id"))
-    player: Mapped["Users"] = relationship()
+    children: Mapped[list["Users"]] = relationship(back_populates="admin_rank")
 
 
 def GetUser():
@@ -179,10 +174,22 @@ def IsAdmin():
     # Returns false if the user is not logged in
     if IsLoggedIn():
         if db.session.execute(
-            select(Admins).where(
-                Admins.player_id == GetUser().id)).scalar_one_or_none():
+            select(Users.admin_rank_id).where(
+                Users.id == GetUser().id)).scalar() > 1:
             return True
     return False
+
+
+def IsOwner():
+    # Checks if the logged in user is the owner
+    # Returns false if the user is not logged in
+    if IsLoggedIn():
+        if db.session().execute(
+            select(Users.admin_rank_id).where(
+                Users.id == GetUser().id)).scalar() == 3:
+            return True
+    else:
+        return False
 
 
 def AdminPageReject():
@@ -225,6 +232,7 @@ def CalculateAllPlayerPoints():
 
 
 def IsValidLength(text: str, maxL: int, minL: int):
+    # Checks if length of text is within defined boundaries
     return (len(text) <= maxL and len(text) >= minL)
 
 
@@ -309,7 +317,8 @@ def profile():
             "profile_logged_in.html",
             user=GetUser(),
             title="Profile",
-            isadmin=IsAdmin()
+            isadmin=IsAdmin(),
+            isowner=IsOwner()
         )
     else:
         return render_template(
@@ -395,7 +404,7 @@ def signupregister():
         db.session().add(Users(
             name=username,
             password_hash=password_hash,
-            admin=0,
+            admin_rank_id=1,
             points=0))
 
         db.session().commit()
@@ -681,6 +690,124 @@ def reviewrecordchoice(subid, accepted):
     conn.commit()
 
     return app.redirect("/reviewrecords")
+
+
+# Owner: Admin managing page
+@app.route("/adminmanaging")
+def adminmanaging():
+    if not IsOwner():
+        return AdminPageReject()
+
+    return render_template(
+        "adminmanaging.html",
+        title="Admin Managing",
+        back="/profile",
+        message=GetMessage("/adminmanaging")
+    )
+
+
+# Owner: Admin adding page
+@app.route("/adminmanaging/add", methods=["GET", "POST"])
+def adminaddpage():
+    if not IsOwner():
+        return AdminPageReject()
+
+    # Get the filter for usernames
+    nameFilter = request.form.get("filter")
+    if not nameFilter:
+        nameFilter = ""
+
+    # Get every user the isn't an admin
+    users = db.session.execute(
+        select(Users).where(
+            Users.admin_rank_id == 1).where(
+                Users.name.contains(nameFilter))).scalars()
+
+    return render_template(
+        "adminadd.html",
+        users=users,
+        title="Add an Admin",
+        back="/adminmanaging"
+    )
+
+
+# Owner: Route that adds the admin
+@app.route("/adminmanaging/add/<int:id>")
+def adminadd(id):
+    if not IsOwner():
+        return AdminPageReject()
+
+    conn = db.session()
+
+    # Get the user to be promoted
+    user = conn.execute(
+        select(Users).where(Users.id == id)).scalar_one_or_none()
+
+    # If the user doesn't exists, return a page not found error
+    if not user:
+        abort(404)
+
+    # Update the user's details with new admins perms
+    conn.execute(
+        update(Users).where(
+            Users.id == id).values(admin_rank_id=2))
+
+    conn.commit()
+
+    SetMessage("/adminmanaging", f"{user.name} added as an Admin", False)
+    return app.redirect("/adminmanaging")
+
+
+# Owner: Admin removing page
+@app.route("/adminmanaging/remove", methods=["GET", "POST"])
+def adminremovepage():
+    if not IsOwner():
+        return AdminPageReject()
+
+    # Get the filter for usernames
+    nameFilter = request.form.get("filter")
+    if not nameFilter:
+        nameFilter = ""
+
+    # Get every admin other than owner
+    admins = db.session().execute(
+        select(Users).where(
+            Users.admin_rank_id == 2).where(
+                Users.name.contains(nameFilter))).scalars()
+
+    return render_template(
+        "adminremove.html",
+        admins=admins,
+        back="/adminmanaging",
+        title="Remove an Admin"
+    )
+
+
+# Owner: Route that removes the admin
+@app.route("/adminmanaging/remove/<int:id>")
+def adminremove(id):
+    if not IsOwner():
+        return AdminPageReject()
+
+    conn = db.session()
+
+    # Get the user to be demoted
+    user = conn.execute(
+        select(Users).where(
+            Users.id == id)).scalar_one_or_none()
+
+    # If the user doesn't exist, return a page not found error
+    if not user:
+        abort(404)
+
+    # Update the user's details with removed admin perms
+    conn.execute(update(Users).where(
+        Users.id == id).values(admin_rank_id=1))
+
+    conn.commit()
+    SetMessage("/adminmanaging", f"{user.name} removed as Admin")
+
+    return app.redirect("/adminmanaging")
 
 
 # Route for 404 error handling

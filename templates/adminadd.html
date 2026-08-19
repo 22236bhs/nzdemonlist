@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h2>Filter Name:</h2>
+<form action="/adminmanaging/add" method="post">
+    <input type="text" name="filter">
+    <br><br>
+    <input type="submit" value="Filter">
+</form>
+
+{% for user in users %}
+
+<h1><a href="/adminmanaging/add/{{user.id}}">- {{user.name}}</a></h1>
+
+{% endfor %}
+
+{% endblock %}

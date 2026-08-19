@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h2>Filter Name:</h2>
+<form action="/adminmanaging/remove" method="post">
+    <input type="text" name="filter">
+    <br><br>
+    <input type="submit" value="Filter">
+</form>
+
+{% for admin in admins %}
+
+<h1><a href="/adminmanaging/remove/{{admin.id}}">- {{admin.name}}</a></h1>
+
+{% endfor %}
+
+{% endblock %}

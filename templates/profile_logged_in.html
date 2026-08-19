@@ -7,11 +7,18 @@
 <h2><a href="/logout">LOGOUT</a></h2>
 <br>
 <h1>User: {{user.name}}</h1>
-{% if isadmin %}
+
+{% if isadmin or isowner %}
 <br>
 <h1>Admin Controls</h1>
+{% endif %}
+{% if isadmin %}
 <h2><a href="/reviewrecords">- Review User submissions</a></h2>
 {% endif %}
+{% if isowner %}
+<h2><a href="/adminmanaging">- Manage Admins</a></h2>
+{% endif %}
+
 <br>
 <h1><a href="/submission">Submit a Record</a></h1>
 <br>

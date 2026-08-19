@@ -1,10 +1,8 @@
 Sprint 3
   goals: 
-    -- finished wireframes and implemented them
+    -- level adding 
     -- actual nz players and levels
-    -- level adding
-    -- can add other admins
-    -- min password and username lengths    
+    -- finished wireframes and implemented them
   
 notes:
 - Get lots of feedback even if it's useless
