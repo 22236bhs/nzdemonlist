@@ -210,8 +210,8 @@ def CalculateNewLevelPoints():
     size = float(len(levels))
 
     for level in levels:
-        newPoints = 75 * (1 - ((level[0].placement-1) / (size-1)) ** 0.5) + 25
-        newPoints = int(round(newPoints * 10)) / 10.0
+        newPoints = 175 * (1 - ((level[0].placement-1) / (size-1)) ** 0.5) + 25
+        newPoints = str(round(newPoints, 1))
         conn.execute(
             update(Levels).where(
                 Levels.id == level[0].id).values(points=newPoints))
@@ -245,6 +245,7 @@ def CalculateAllPlayerPoints():
         points = 0
         for comp in user.user_completions:
             points += comp.level.points
+        points = str(round(points, 1))
         conn.execute(
             update(Users).where(Users.id == user.id).values(points=points))
 
@@ -957,6 +958,16 @@ def addlevel():
         for level in easierLevels:
             conn.execute(update(Levels).where(
                 Levels.id == level.id).values(placement=level.placement + 1))
+
+        youtubeLinkCode = ""
+        index = completionLink.find("?v=")
+        if index != -1:
+            youtubeLinkCode = completionLink[index + 3:]
+        else:
+            index = completionLink.find("youtu.be/")
+            youtubeLinkCode = completionLink[index + 9:]
+
+        completionLink = f"https://www.youtube.com/embed/{youtubeLinkCode}"
 
         # Create the new Levels object for the new level and add to database
         newLevel = Levels(

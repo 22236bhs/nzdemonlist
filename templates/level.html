@@ -1,7 +1,9 @@
 {% extends "layout.html" %}
 
 {% block content %}
-
+<div class="vid-container">
+    <iframe class="comp-vid" width="608px" height="308px" src="{{level.verification.completion_link}}" allowfullscreen></iframe>
+</div>
 <h1>name: {{level.name}}</h1>
 <h2>placement: {{level.placement}}</h2>
 <h2>Verifier: {{level.verifier.name}}</h2>

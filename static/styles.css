@@ -162,3 +162,10 @@ label{
     padding-bottom: 30px;
     margin: 0;
 }
+
+.vid-container{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
