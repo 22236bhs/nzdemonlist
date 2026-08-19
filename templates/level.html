@@ -9,8 +9,13 @@
 <br>
 <h2>Victors:</h2>
 
-{% for completion in level.level_completions %}
-<h3><a href="/leaderboard/{{completion.player.id}}">{{completion.player.name}}</a></h3>
+{% if completions %}
+{% for completion in completions %}
+<h3><a href="/leaderboard/{{completion[0].player.id}}">- {{completion[0].player.name}}</a></h3>
 {% endfor %}
+
+{% else %}
+<h3>No Victors</h3>
+{% endif %}
 
 {% endblock %}

@@ -10,6 +10,9 @@ submissionCompletionLinkMaxL = 100
 submissionSuccess = "Record Submitted Successfully"
 submissionAlreadyExists = "Submission Already Exists"
 maxSubmissionDisplayCount = 15
+levelImageFolder = "static/images/levels/"
+invalidLevelCreation = "Invalid Level Details"
+levelCreationSuccess = "Successfully created new level"
 
 cbfOptions = {
     0: "No CBF",

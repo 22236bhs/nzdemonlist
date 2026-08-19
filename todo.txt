@@ -1,9 +1,10 @@
 Sprint 3
   goals: 
-    -- level adding 
     -- actual nz players and levels
+    -- images
     -- finished wireframes and implemented them
   
 notes:
 - Get lots of feedback even if it's useless
 - Ask mr rodkiss about database integrity and testing. 
+- ask about secret key

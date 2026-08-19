@@ -5,6 +5,7 @@ from sqlalchemy import String, Integer, ForeignKey, select, update, text
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 import config
+import os
 import time
 
 DATABASE = "database.db"
@@ -67,6 +68,7 @@ class Levels(Base):
         primaryjoin="Completions.level_id == Levels.id",
         back_populates="level")
     points: Mapped[int] = mapped_column(Integer())
+    image_name: Mapped[str] = mapped_column(String())
 
 
 class Submissions(Base):
@@ -201,6 +203,24 @@ def AdminPageReject():
         )
 
 
+def CalculateNewLevelPoints():
+    conn = db.session()
+    levels = conn.execute(
+        select(Levels)).fetchall()
+    size = float(len(levels))
+
+    for level in levels:
+        newPoints = 75 * (1 - ((level[0].placement-1) / (size-1)) ** 0.5) + 25
+        newPoints = int(round(newPoints * 10)) / 10.0
+        conn.execute(
+            update(Levels).where(
+                Levels.id == level[0].id).values(points=newPoints))
+
+    conn.commit()
+
+    CalculateAllPlayerPoints()
+
+
 def PlayerAddLevelPoints(playerID: int, levelID: int) -> None:
     # Adds the points of a level to a player's points.
     conn = db.session()
@@ -239,6 +259,7 @@ def IsValidLength(text: str, maxL: int, minL: int):
 # Demonlist page
 @app.route("/")
 def list():
+    CalculateNewLevelPoints()
     data = db.session().execute(
         select(Levels).order_by(Levels.placement)).scalars()
     return render_template("list.html", data=data, title="Demonlist")
@@ -250,10 +271,21 @@ def level(id):
     data = db.session().execute(
         select(Levels).where(Levels.id == id)).scalar_one_or_none()
 
+    completions = db.session().execute(
+        select(Completions).where(
+            Completions.level_id == id).where(
+                Completions.index > 0).order_by(Completions.index)).fetchall()
+
     # Return page not found error if the level doesn't exist
     if not data:
         abort(404)
-    return render_template("level.html", level=data, title=data.name, back="/")
+    return render_template(
+        "level.html",
+        level=data,
+        title=data.name,
+        back="/",
+        completions=completions
+    )
 
 
 # Leaderboard page
@@ -808,6 +840,156 @@ def adminremove(id):
     SetMessage("/adminmanaging", f"{user.name} removed as Admin")
 
     return app.redirect("/adminmanaging")
+
+
+@app.route("/addlevel")
+def addlevelpage():
+    if not IsAdmin():
+        return AdminPageReject()
+
+    levels = db.session().execute(
+        select(Levels).order_by(Levels.placement.asc())).fetchall()
+
+    players = db.session().execute(
+        select(Users)).fetchall()
+
+    return render_template(
+        "leveladd.html",
+        back="/profile",
+        title="Add New Level",
+        levels=levels,
+        players=players,
+        cbfOptions=config.cbfOptions
+    )
+
+
+# Admin: Route for adding the level
+@app.route("/addlevel/register", methods=["GET", "POST"])
+def addlevel():
+    if not IsAdmin():
+        return AdminPageReject()
+
+    # Get details from form
+    name = request.form.get("name")
+    placement = request.form.get("placement")
+    publisherID = request.form.get("publisher")
+    verifierID = request.form.get("verifier")
+    completionLink = request.form.get("completion_link")
+    fps = request.form.get("FPS")
+    cbf = request.form.get("CBF")
+
+    conn = db.session()
+
+    success = True
+
+    # Fail the adding process if there is no uploaded image
+    if "picture" not in request.files:
+        success = False
+
+    # Get the image data and file name
+    file = request.files["picture"]
+    filename = secure_filename(file.filename)
+
+    # Check the validity of all the form inputs
+    if not (file and filename and file.name):
+        success = False
+
+    if not (name and placement and publisherID and verifierID):
+        success = False
+
+    elif not (fps and cbf and completionLink):
+        success = False
+
+    elif not IsInt(placement):
+        success = False
+
+    # Check if placement is within logical range for level placements
+    elif int(placement) < 1 or len(conn.execute(
+            select(Levels)).fetchall()) + 1 < int(placement):
+        success = False
+
+    # Check if publisher exists
+    elif not conn.execute(
+            select(Users).where(Users.id == publisherID)).scalar_one_or_none():
+        success = False
+
+    # Check if verifier exists
+    elif not conn.execute(
+            select(Users).where(Users.id == verifierID)).scalar_one_or_none():
+        success = False
+
+    elif not IsInt(cbf) or not IsInt(fps):
+        success = False
+
+    elif int(fps) < 1 or int(cbf) not in config.cbfOptions:
+        success = False
+
+    if not success:
+        SetMessage("/addlevel", config.invalidLevelCreation)
+        return app.redirect("/addlevel")
+    else:
+        # Find the file suffix of the image filename
+        newFileName = ""
+        suffixStart = 0
+        for i in range(len(filename)-1, -1, -1):
+            if filename[i] == ".":
+                suffixStart = i
+                break
+
+        # Replace the old filename with the level's name
+        newFileName = f"{name.lower()}{filename[suffixStart:]}"
+        file.save(os.path.join(config.levelImageFolder, newFileName))
+
+        # Get next level primary key id to be added
+        nextLevelID = 1 + conn.execute(
+            select(Levels.id).order_by(Levels.id.desc())).first()[0]
+
+        # Get next completion primary key id to be added
+        nextCompletionID = 1 + conn.execute(
+            select(Completions.id).order_by(Completions.id.desc())).first()[0]
+
+        # Get all levels placed below the new level
+        easierLevels = conn.execute(
+                    select(Levels).where(
+                        Levels.placement >= int(placement))).scalars()
+
+        # Move the levels below the new level down a spot
+        for level in easierLevels:
+            conn.execute(update(Levels).where(
+                Levels.id == level.id).values(placement=level.placement + 1))
+
+        # Create the new Levels object for the new level and add to database
+        newLevel = Levels(
+            id=nextLevelID,
+            name=name,
+            placement=placement,
+            verifier_id=verifierID,
+            verification_id=nextCompletionID,
+            publisher_id=publisherID,
+            image_name=newFileName
+        )
+        conn.add(newLevel)
+
+        # Create Completions object for the verification and add to database
+        newCompletion = Completions(
+            id=nextCompletionID,
+            player_id=verifierID,
+            level_id=nextLevelID,
+            completion_link=completionLink,
+            FPS=fps,
+            CBF=cbf,
+            accepted=1,
+            index=0
+        )
+
+        conn.add(newCompletion)
+        conn.commit()
+
+        # Calculate new points of all levels based on new placements
+        CalculateNewLevelPoints()
+
+        SetMessage("/addlevel", config.levelCreationSuccess, False)
+        return app.redirect(f"/level/{nextLevelID}")
 
 
 # Route for 404 error handling
