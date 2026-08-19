@@ -1,7 +1,6 @@
 Sprint 3
   goals: 
-    -- finished wireframes and implemented them. 
-    -- code comments bruh
+    -- finished wireframes and implemented them
     -- actual nz players and levels
     -- level adding
     -- can add other admins

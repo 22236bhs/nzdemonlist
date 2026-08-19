@@ -91,6 +91,7 @@ class Admins(Base):
 
 
 def GetUser():
+    # Returns the SQL user object for the signed in user, if logged in
     if "user" in session:
         userID = session.get("user")
         if IsLoggedIn():
@@ -103,6 +104,7 @@ def GetUser():
 
 
 def IsLoggedIn():
+    # Returns true if the user is logged in, otherwise returns false
     if "loggedin" in session:
         return session.get("loggedin")
     else:
@@ -110,16 +112,19 @@ def IsLoggedIn():
 
 
 def LogInUser(userID: int):
+    # Inserts the user details into the session cookies
     session["user"] = userID
     session["loggedin"] = True
 
 
 def SignOutUser():
+    # Resets the user details in the session cookies
     session["user"] = 0
     session["loggedin"] = False
 
 
 def SetMessage(route: str, message: str, error: bool = True):
+    # Stores a message for a specified route in the session cookies
     if "message" not in session:
         session["message"] = {}
     session["message"][route] = [message, error]
@@ -127,9 +132,12 @@ def SetMessage(route: str, message: str, error: bool = True):
 
 
 def GetMessage(route: str):
+    # Gets the message for a specific route in the session cookies
     if "message" in session:
         if route in session["message"]:
             message = session["message"][route]
+            # Messages displayed should only show up once,
+            # so the message clears when it is displayed
             SetMessage(route, "")
             return message
         else:
@@ -139,6 +147,7 @@ def GetMessage(route: str):
 
 
 def PushError(number: int, code: str):
+    # Pushes the user to an error page template
     return render_template("error_page.html",
                            error_code=number,
                            title=f"{number} Error",
@@ -146,6 +155,8 @@ def PushError(number: int, code: str):
 
 
 def LoggedOutRedirect():
+    # Pushes the user to a logged out page.
+    # This is done if they try to access a page that requires to be logged in
     return render_template(
         "logged_out_redirect.html",
         title="Logged Out"
@@ -153,6 +164,8 @@ def LoggedOutRedirect():
 
 
 def IsInt(x):
+    # Brute forces if the parameter can be converted to int.
+    # This doesn't have to be efficient because it is not used frequently
     try:
         x = int(x)
     except ValueError:
@@ -162,6 +175,8 @@ def IsInt(x):
 
 
 def IsAdmin():
+    # Checks if the logged in user has admin permissions.
+    # Returns false if the user is not logged in
     if IsLoggedIn():
         if db.session.execute(
             select(Admins).where(
@@ -171,6 +186,8 @@ def IsAdmin():
 
 
 def AdminPageReject():
+    # Pushes the user to a permission denied page.
+    # This is when a user tries to access a page that requires admin perms
     return render_template(
         "adminrejection.html",
         title="Access Denied"
@@ -178,6 +195,7 @@ def AdminPageReject():
 
 
 def PlayerAddLevelPoints(playerID: int, levelID: int) -> None:
+    # Adds the points of a level to a player's points.
     conn = db.session()
     user = conn.execute(
         select(Users).where(Users.id == playerID)).scalar_one()
@@ -190,6 +208,9 @@ def PlayerAddLevelPoints(playerID: int, levelID: int) -> None:
 
 
 def CalculateAllPlayerPoints():
+    # Recalculates the points of every player.
+    # This has to be done when a level is added since it changes a lot
+    # of point values of other levels
     conn = db.session()
     conn.execute(update(Users).values(points=0))
     users = conn.execute(select(Users)).scalars()
@@ -203,6 +224,7 @@ def CalculateAllPlayerPoints():
     conn.commit()
 
 
+# Demonlist page
 @app.route("/")
 def list():
     data = db.session().execute(
@@ -210,18 +232,23 @@ def list():
     return render_template("list.html", data=data, title="Demonlist")
 
 
+# Level page
 @app.route("/level/<int:id>")
 def level(id):
     data = db.session().execute(
         select(Levels).where(Levels.id == id)).scalar_one_or_none()
+
+    # Return page not found error if the level doesn't exist
     if not data:
         abort(404)
     return render_template("level.html", level=data, title=data.name, back="/")
 
 
+# Leaderboard page
 @app.route("/leaderboard")
 def leaderboard():
     conn = db.session()
+    # Fetches all players that have beaten at least one level
     players = conn.execute(
         select(Users).where(
             select(Completions).where(
@@ -230,6 +257,7 @@ def leaderboard():
 
     playersFinal = []
     for player in players:
+        # Fetch the completions of each player
         beaten = conn.execute(text(f'''SELECT Levels.name
                                 FROM Levels
                                 WHERE Levels.id in (
@@ -237,7 +265,9 @@ def leaderboard():
                                     FROM Completions
                                     WHERE player_id = {player[0].id})
                                 ORDER BY Levels.placement ASC;''')).fetchall()
-        
+
+        # Bundles player info with their hardest level,
+        # and their beaten level count
         playersFinal.append([player[0], beaten[0][0], len(beaten)])
 
     return render_template(
@@ -247,13 +277,16 @@ def leaderboard():
     )
 
 
+# Player page
 @app.route("/leaderboard/<int:id>")
 def player(id):
     playerData = db.session().execute(
         select(Users).where(Users.id == id)).scalar_one_or_none()
 
+    # Return page not found error if the player doesn't exist
     if not playerData:
         abort(404)
+
     return render_template(
         "player.html",
         player=playerData,
@@ -262,8 +295,11 @@ def player(id):
     )
 
 
+# Profile page
 @app.route("/profile")
 def profile():
+    # Opens a different page depending on whether the user,
+    # is logged in or not
     if IsLoggedIn():
         return render_template(
             "profile_logged_in.html",
@@ -278,12 +314,14 @@ def profile():
         )
 
 
+# Route to log out user
 @app.route("/logout")
 def logout():
     SignOutUser()
     return app.redirect("/profile")
 
 
+# Signup page
 @app.route("/signup")
 def signup():
     if IsLoggedIn():
@@ -301,6 +339,7 @@ def signup():
     )
 
 
+# Signup form submission route
 @app.route("/signup/register", methods=["GET", "POST"])
 def signupregister():
     if IsLoggedIn():
@@ -312,6 +351,7 @@ def signupregister():
     password = request.form.get("password")
     confirmPassword = request.form.get("confirm-password")
 
+    # Checks if the form inputs are valid before processing
     if (not username) or (len(username) > config.usernameMaxLength):
         SetMessage("signup", "Invalid Input")
         success = False
@@ -320,11 +360,14 @@ def signupregister():
         SetMessage("signup", "Invalid Input")
         success = False
 
+    # Reject sign up if username is taken
     elif username in db.session().execute(
             select(Users.name).where(Users.name == username)).scalars():
         SetMessage("signup", config.usernameTaken)
         success = False
 
+    # Confirm password must match password,
+    # so signup is rejected otherwise
     elif confirmPassword != password:
         SetMessage("signup", config.confirmPasswordFail)
         success = False
@@ -333,6 +376,7 @@ def signupregister():
         return app.redirect("/signup")
 
     else:
+        # Hash the user password and create the new User object
         password_hash = generate_password_hash(password)
 
         db.session().add(Users(
@@ -347,6 +391,7 @@ def signupregister():
         return app.redirect("/profile")
 
 
+# Login page
 @app.route("/login")
 def login():
     if IsLoggedIn():
@@ -364,6 +409,7 @@ def login():
     )
 
 
+# Login form submission route
 @app.route("/login/register", methods=["GET", "POST"])
 def loginregister():
     if IsLoggedIn():
@@ -374,6 +420,7 @@ def loginregister():
     username = request.form.get("username")
     password = request.form.get("password")
 
+    # Check that the form inputs are valid before processing
     if (not username) or (len(username) > config.usernameMaxLength):
         SetMessage("login", "Invalid Input")
         success = False
@@ -388,28 +435,36 @@ def loginregister():
         user = db.session().execute(
             select(Users).where(Users.name == username)).scalar_one_or_none()
 
+        # Reject login if username doesn't exist in database
         if not user:
             SetMessage("login", config.loginFail)
             return app.redirect("/login")
 
         else:
+            # Log in user if entered password is correct.
             if check_password_hash(user.password_hash, password):
                 LogInUser(user.id)
                 return app.redirect("/profile")
-            SetMessage("login", config.loginFail)
-            return app.redirect("/login")
+            else:
+                SetMessage("login", config.loginFail)
+                return app.redirect("/login")
 
 
+# Record submission page
 @app.route("/submission")
 def submitrecord():
     if not IsLoggedIn():
         return LoggedOutRedirect()
 
+    # Get the ids of the user's completed levels
     ids = [i.level.id for i in GetUser().user_completions]
 
+    # Get the Level objects for each level that exists in the database
     levels = db.session.execute(
         select(Levels).order_by(Levels.placement)).scalars()
 
+    # Bundle each Level object with a boolean of whether the user,
+    # has beaten it or not
     levels = [[i, 1] if i.id in ids else [i, 0] for i in levels]
 
     return render_template(
@@ -423,6 +478,7 @@ def submitrecord():
     )
 
 
+# Record submission form submission route
 @app.route("/submission/submit", methods=["GET", "POST"])
 def submitrecordform():
     if not IsLoggedIn():
@@ -435,6 +491,7 @@ def submitrecordform():
 
     success = True
 
+    # Check that the form inputs are valid before processing
     if (not levelID) or (not completionLink) or (not fps) or (not cbf):
         success = False
 
@@ -453,6 +510,7 @@ def submitrecordform():
     elif int(fps) < 1:
         success = False
 
+    # Reject submission if level doesn't exist
     elif not db.session.execute(
             select(Levels).where(Levels.id == levelID)).scalar_one_or_none():
 
@@ -462,6 +520,8 @@ def submitrecordform():
         SetMessage("submission", config.submissionFail)
         return app.redirect("/submission")
 
+    # Reject submission if the user already has a submission
+    # for the particular level
     if db.session.execute(
         select(Completions).where(
             Completions.level_id == levelID).where
@@ -470,6 +530,7 @@ def submitrecordform():
         SetMessage("submission", config.submissionAlreadyExists)
         return app.redirect("/submission")
 
+    # Create Completion object and add to database
     completion = Completions(
         player_id=GetUser().id,
         level_id=levelID,
@@ -482,11 +543,14 @@ def submitrecordform():
 
     db.session.add(completion)
 
+    # Get the id of the newly added completion
     completionID = db.session.execute(
         select(Completions.id).where(
             Completions.level_id == levelID).where(
                 Completions.player_id == GetUser().id)).first()[0]
 
+    # Create the Submissions object for the completion with the
+    # current time and add to database
     submission = Submissions(completion_id=completionID, time=time.time())
 
     db.session.add(submission)
@@ -498,18 +562,20 @@ def submitrecordform():
     return app.redirect("/submission")
 
 
+# Admin: record submission listing page
 @app.route("/reviewrecords")
 def reviewrecordpage():
     if not IsAdmin():
         return AdminPageReject()
 
+    # Gather submissions ordered by time submitted.
+    # Only gets a certain amount based on a config variable
     submissions = db.session.execute(
         select(Submissions).order_by(
             Submissions.time.asc())).scalars().fetchmany(
                 config.maxSubmissionDisplayCount)
 
     message = GetMessage("/reviewrecords")
-    print(message)
     return render_template(
         "recordreviewlist.html",
         submissions=submissions,
@@ -519,18 +585,22 @@ def reviewrecordpage():
         )
 
 
+# Admin: Record review page for a particular submission
 @app.route("/reviewrecord/<int:id>")
 def reviewrecord(id):
     if not IsAdmin():
         return AdminPageReject()
 
+    # Get the completion id corresponding to the submission
     completionID = db.session().execute(
         select(Submissions.completion_id).where(
             Submissions.id == id)).scalar_one_or_none()
 
+    # If the completion doesn't exist, return page not found error
     if not completionID:
         abort(404)
 
+    # Get the details of the submission
     submissionDetails = db.session().execute(
         select(Completions).where(
             Completions.id == completionID)).scalar_one()
@@ -545,23 +615,31 @@ def reviewrecord(id):
     )
 
 
+# Admin: Decision for a particular record submission
 @app.route("/reviewrecord/<int:subid>/<int:accepted>")
 def reviewrecordchoice(subid, accepted):
     if not IsAdmin():
         return AdminPageReject()
 
     conn = db.session()
+
+    # Get the completion id corresponding to the submission
     compID = conn.execute(
         select(Submissions.completion_id).where(
             Submissions.id == subid)).scalar_one_or_none()
 
+    # If the completion doesn't exist, return a page not found error
     if not compID:
         abort(404)
 
+    # Get completion information
     completion = conn.execute(
         select(Completions).where(Completions.id == compID)).scalar()
 
     if accepted:
+        # If the decision was to accept the submission,
+        # get the next completion index and set the completion to accepted,
+        # and set the index to the next index.
         nextIndex = db.session.execute(
             select(Completions.index).where(
                 Completions.level_id == completion.level.id).order_by(
@@ -570,23 +648,28 @@ def reviewrecordchoice(subid, accepted):
         conn.execute(update(Completions).where(
             Completions.id == compID).values(accepted=1, index=nextIndex))
 
+        # Recalculate player's points
         PlayerAddLevelPoints(completion.player_id, completion.level_id)
         SetMessage("/reviewrecords", "Record Accepted", False)
     else:
+        # If the record is rejected, delete it the completion from the database
         conn.execute(text(f"DELETE FROM Completions WHERE id == {compID};"))
         SetMessage("/reviewrecords", "Record Rejected")
 
+    # Delete the submission
     conn.execute(text(f"DELETE FROM Submissions WHERE id == {subid};"))
     conn.commit()
 
     return app.redirect("/reviewrecords")
 
 
+# Route for 404 error handling
 @app.errorhandler(404)
 def error404(e):
     return PushError(404, e)
 
 
+# Route for 505 error handling
 @app.errorhandler(505)
 def error505(e):
     return PushError(505, e)
