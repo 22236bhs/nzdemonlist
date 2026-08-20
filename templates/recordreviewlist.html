@@ -10,7 +10,8 @@
 {% endif %}
 
 {% for submission in submissions %}
-<h2><a href="/reviewrecord/{{submission.id}}">{{submission.completion.player.name}} - {{submission.completion.level.name}}</a></h2>
+<br>
+<h2><a class="generic-button" href="/reviewrecord/{{submission.id}}">{{submission.completion.player.name}} - {{submission.completion.level.name}}</a></h2>
 {% endfor %}
 
 

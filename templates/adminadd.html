@@ -9,8 +9,8 @@
 </form>
 
 {% for user in users %}
-
-<h1><a href="/adminmanaging/add/{{user.id}}">- {{user.name}}</a></h1>
+<br>
+<h1><a class="generic-button" href="/adminmanaging/add/{{user.id}}">{{user.name}}</a></h1>
 
 {% endfor %}
 

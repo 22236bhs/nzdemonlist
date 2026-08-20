@@ -9,8 +9,8 @@
 </form>
 
 {% for admin in admins %}
-
-<h1><a href="/adminmanaging/remove/{{admin.id}}">- {{admin.name}}</a></h1>
+<br>
+<h1><a class="generic-button" href="/adminmanaging/remove/{{admin.id}}">{{admin.name}}</a></h1>
 
 {% endfor %}
 

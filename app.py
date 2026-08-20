@@ -146,6 +146,7 @@ def GetMessage(route: str):
 def PushError(number: int, code: str):
     # Pushes the user to an error page template
     return render_template("error_page.html",
+                           topText="ERROR",
                            error_code=number,
                            title=f"{number} Error",
                            error=code), number
@@ -199,7 +200,8 @@ def AdminPageReject():
     # This is when a user tries to access a page that requires admin perms
     return render_template(
         "adminrejection.html",
-        title="Access Denied"
+        title="Access Denied",
+        topText="Access Denied"
         )
 
 
@@ -350,15 +352,17 @@ def player(id):
     playerData = conn.execute(
         select(Users).where(Users.id == id)).scalar_one_or_none()
 
-    beaten = conn.execute(text(f'''SELECT Levels.name
-                                FROM Levels
-                                WHERE Levels.id in (
-                                    SELECT level_id
-                                    FROM Completions
-                                    WHERE player_id = {id})
-                                ORDER BY Levels.placement ASC;''')).fetchall()
-
-    hardest = beaten[0][0]
+    beaten = conn.execute(text(f'''
+SELECT Levels.name, Completions.completion_link, Completions.accepted,
+Completions.\"index\"
+FROM Levels
+JOIN Completions ON Completions.level_id = Levels.id
+WHERE Levels.id in (
+    SELECT level_id
+    FROM Completions
+    WHERE player_id = {id})
+AND Completions.player_id = {id}
+ORDER BY Levels.placement ASC;''')).fetchall()
 
     # Return page not found error if the player doesn't exist
     if not playerData:
@@ -369,7 +373,7 @@ def player(id):
         player=playerData,
         title=playerData.name,
         back="/leaderboard",
-        hardest=hardest
+        userComps=beaten
     )
 
 
@@ -810,7 +814,7 @@ def adminadd(id):
         select(Users).where(Users.id == id)).scalar_one_or_none()
 
     # If the user doesn't exists, return a page not found error
-    if not user:
+    if not user or user.admin_rank_id == 3:
         abort(404)
 
     # Update the user's details with new admins perms
@@ -863,7 +867,7 @@ def adminremove(id):
             Users.id == id)).scalar_one_or_none()
 
     # If the user doesn't exist, return a page not found error
-    if not user:
+    if not user or user.admin_rank_id == 3:
         abort(404)
 
     # Update the user's details with removed admin perms

@@ -3,38 +3,40 @@
 {% block content %}
 
 <h1 class="page-top-text">Submit a Level Completion</h1>
+<div class="form-parent">
+    <div class="form-child">
+        <form action="/submission/submit" method="post">
+            
+            <label class="form-label">Level</label>
+            <br><br>
+            <select name="level">
+                {% for level in levels %}
+                <option value="{{level[0].id}}">{{level[0].placement}}. {{level[0].name}}{% if level[1] %} (Already Submitted){% endif %}</option>
+                {% endfor %}
+            </select>
+            <br><br><br><br>
 
-<form action="/submission/submit" method="post">
-    
-    <label>Level</label>
-    <br><br>
-    <select name="level">
-        {% for level in levels %}
-        <option value="{{level[0].id}}">{{level[0].placement}}. {{level[0].name}}{% if level[1] %} (Already Submitted){% endif %}</option>
-        {% endfor %}
-    </select>
-    <br><br><br>
+            <label class="form-label">Completion Link</label>
+            <br><br>
+            <input type="text" name="completion_link" maxlength="100" required>
+            <br><br><br><br>
 
-    <label>Completion Link</label>
-    <br><br>
-    <input type="text" name="completion_link" maxlength="100" required>
-    <br><br><br>
+            <label class="form-label">FPS</label>
+            <br><br>
+            <input type="number" name="FPS" required min="1">
+            <br><br><br><br>
 
-    <label>FPS</label>
-    <br><br>
-    <input type="number" name="FPS" required min="1">
-    <br><br><br>
+            <label class="form-label">CBF</label>
+            <br><br>
+            <select name="CBF">
+                {% for op in cbfOptions %}
+                <option value="{{op}}">{{cbfOptions[op]}}</option>
+                {% endfor %}
+            </select>
+            <br><br><br>
 
-    <label>CBF</label>
-    <br><br>
-    <select name="CBF">
-        {% for op in cbfOptions %}
-        <option value="{{op}}">{{cbfOptions[op]}}</option>
-        {% endfor %}
-    </select>
-    <br><br><br>
-
-    <input type="submit" value="Submit">
-</form>
-
+            <input type="submit" value="Submit" class="submit-button">
+        </form>
+    </div>
+</div>
 {% endblock %}

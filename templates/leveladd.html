@@ -1,71 +1,73 @@
 {% extends "layout.html" %}
 {% block content %}
+<div class="form-parent">
+    <div class="form-child">
+        <form action="/addlevel/register" method="post" enctype="multipart/form-data">
+            <label class="form-label">Level Name</label>
+            <br><br>
+            <input type="text" name="name" required>
+            <br><br><br><br>
 
-<form action="/addlevel/register" method="post" enctype="multipart/form-data">
-    <label>Level Name</label>
-    <br><br>
-    <input type="text" name="name" required>
-    <br><br><br>
+            <label class="form-label">Placement</label>
+            <br><br>
+            <select name="placement">
+                {% for level in levels %}
 
-    <label>Placement</label>
-    <br><br>
-    <select name="placement">
-        {% for level in levels %}
+                <option value="{{level[0].placement}}">#{{level[0].placement}} - Above {{level[0].name}}</option>
 
-        <option value="{{level[0].placement}}">#{{level[0].placement}} - Above {{level[0].name}}</option>
+                {% endfor %}
+                <option value="{{levels[-1][0].placement + 1}}">#{{levels[-1][0].placement + 1}} - Below {{levels[-1][0].name}}</option>
+            </select>
+            <br><br><br><br>
 
-        {% endfor %}
-        <option value="{{levels[-1][0].placement + 1}}">#{{levels[-1][0].placement + 1}} - Below {{levels[-1][0].name}}</option>
-    </select>
-    <br><br><br>
+            <label class="form-label">Publisher</label>
+            <br><br>
+            <select name="publisher">
+                {% for player in players %}
+                <option value="{{player[0].id}}">{{player[0].name}}</option>
+                {% endfor %}
+            </select>
+            <br><br><br><br>
 
-    <label>Publisher</label>
-    <br><br>
-    <select name="publisher">
-        {% for player in players %}
-        <option value="{{player[0].id}}">{{player[0].name}}</option>
-        {% endfor %}
-    </select>
-    <br><br><br>
+            <label class="form-label">Picture</label>
+            <br><br>
+            <input type="file" name="picture" accept="image/*" required>
+            <br><br><br>
 
-    <label>Picture</label>
-    <br><br>
-    <input type="file" name="picture" accept="image/*" required>
-    <br><br><br>
+            <h1 class="form-label" style="font-weight: bolder;">Verification</h1>
+            <br><br><br>
 
-    <h1>Verification</h1>
-    <br><br>
+            <label class="form-label">Verifier</label>
+            <br><br>
+            <select name="verifier">
+                {% for player in players %}
+                <option value="{{player[0].id}}">{{player[0].name}}</option>
+                {% endfor %}
+            </select>
+            <br><br><br><br>
+            
+            <label class="form-label">Completion Link</label>
+            <br><br>
+            <input type="text" name="completion_link" maxlength="100" required>
+            <br><br><br><br>
 
-    <label>Verifier</label>
-    <br><br>
-    <select name="verifier">
-        {% for player in players %}
-        <option value="{{player[0].id}}">{{player[0].name}}</option>
-        {% endfor %}
-    </select>
-    <br><br><br>
-    
-    <label>Completion Link</label>
-    <br><br>
-    <input type="text" name="completion_link" maxlength="100" required>
-    <br><br><br>
+            <label class="form-label">FPS</label>
+            <br><br>
+            <input type="number" name="FPS" required min="1">
+            <br><br><br><br>
 
-    <label>FPS</label>
-    <br><br>
-    <input type="number" name="FPS" required min="1">
-    <br><br><br>
+            <label class="form-label">CBF</label>
+            <br><br>
+            <select name="CBF">
+                {% for op in cbfOptions %}
+                <option value="{{op}}">{{cbfOptions[op]}}</option>
+                {% endfor %}
+            </select>
+            <br><br><br>
 
-    <label>CBF</label>
-    <br><br>
-    <select name="CBF">
-        {% for op in cbfOptions %}
-        <option value="{{op}}">{{cbfOptions[op]}}</option>
-        {% endfor %}
-    </select>
-    <br><br><br>
+            <input type="submit" value="Add Level">
 
-    <input type="submit" value="Add Level">
-
-</form>
-
+        </form>
+    </div>
+</div>
 {% endblock %}
