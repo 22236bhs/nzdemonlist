@@ -262,7 +262,12 @@ def IsValidLength(text: str, maxL: int, minL: int):
 def list():
     data = db.session().execute(
         select(Levels).order_by(Levels.placement)).scalars()
-    return render_template("list.html", data=data, title="Demonlist")
+    return render_template(
+        "list.html",
+        data=data,
+        title="Demonlist",
+        topText="Demonlist"
+        )
 
 
 # Level page
@@ -270,6 +275,18 @@ def list():
 def level(id):
     data = db.session().execute(
         select(Levels).where(Levels.id == id)).scalar_one_or_none()
+
+    # Convert the completion video link to an iframe embed
+    completionLink = data.verification.completion_link
+    youtubeLinkCode = ""
+    index = completionLink.find("?v=")
+    if index != -1:
+        youtubeLinkCode = completionLink[index + 3:]
+    else:
+        index = completionLink.find("youtu.be/")
+        youtubeLinkCode = completionLink[index + 9:]
+
+    completionLink = f"https://www.youtube.com/embed/{youtubeLinkCode}"
 
     completions = db.session().execute(
         select(Completions).where(
@@ -284,7 +301,9 @@ def level(id):
         level=data,
         title=data.name,
         back="/",
-        completions=completions
+        completions=completions,
+        verificationVid=completionLink,
+        topText=data.name
     )
 
 
@@ -318,14 +337,28 @@ def leaderboard():
         "leaderboard.html",
         players=playersFinal,
         title="Leaderboard",
+        topText="Leaderboard"
     )
 
 
 # Player page
 @app.route("/leaderboard/<int:id>")
 def player(id):
-    playerData = db.session().execute(
+
+    conn = db.session()
+
+    playerData = conn.execute(
         select(Users).where(Users.id == id)).scalar_one_or_none()
+
+    beaten = conn.execute(text(f'''SELECT Levels.name
+                                FROM Levels
+                                WHERE Levels.id in (
+                                    SELECT level_id
+                                    FROM Completions
+                                    WHERE player_id = {id})
+                                ORDER BY Levels.placement ASC;''')).fetchall()
+
+    hardest = beaten[0][0]
 
     # Return page not found error if the player doesn't exist
     if not playerData:
@@ -335,7 +368,8 @@ def player(id):
         "player.html",
         player=playerData,
         title=playerData.name,
-        back="/leaderboard"
+        back="/leaderboard",
+        hardest=hardest
     )
 
 
@@ -346,17 +380,15 @@ def profile():
     # is logged in or not
     if IsLoggedIn():
         return render_template(
-            "profile_logged_in.html",
+            "profile.html",
             user=GetUser(),
+            topText=f"Hello {GetUser().name}",
             title="Profile",
             isadmin=IsAdmin(),
             isowner=IsOwner()
         )
     else:
-        return render_template(
-            "profile_logged_out.html",
-            title="Profile",
-        )
+        return app.redirect("/login")
 
 
 # Route to log out user
@@ -379,6 +411,7 @@ def signup():
         title="Sign Up",
         back="/profile",
         message=message,
+        topText="Sign Up",
         userMaxL=config.usernameMaxLength,
         userMinL=config.usernameMinLength,
         passMaxL=config.passwordMaxLength,
@@ -456,8 +489,9 @@ def login():
     return render_template(
         "login.html",
         title="Log In",
-        back="/profile",
+        back="/",
         message=message,
+        topText="Log In",
         userMaxL=config.usernameMaxLength,
         userMinL=config.usernameMinLength,
         passMaxL=config.passwordMaxLength,
@@ -957,16 +991,6 @@ def addlevel():
         for level in easierLevels:
             conn.execute(update(Levels).where(
                 Levels.id == level.id).values(placement=level.placement + 1))
-
-        youtubeLinkCode = ""
-        index = completionLink.find("?v=")
-        if index != -1:
-            youtubeLinkCode = completionLink[index + 3:]
-        else:
-            index = completionLink.find("youtu.be/")
-            youtubeLinkCode = completionLink[index + 9:]
-
-        completionLink = f"https://www.youtube.com/embed/{youtubeLinkCode}"
 
         # Create the new Levels object for the new level and add to database
         newLevel = Levels(

@@ -1,11 +1,11 @@
 Sprint 3
   goals: 
-    -- actual nz players and levels
     -- finished wireframes and implemented them
     -- testing + review
   
 - end of project stuff
 - sprint 2 feedback response
+- Finish database testing
   
 notes:
 - Get lots of feedback even if it's useless

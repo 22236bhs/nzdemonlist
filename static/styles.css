@@ -20,6 +20,7 @@ body{
     padding: 1vw;
     padding-top: 1px;
     min-height: 81vh;
+    text-align: center;
 }
 
 header{
@@ -27,17 +28,17 @@ header{
     width: 100%;
     background-color: #2457be;
     margin: 0;
-    display: grid;
-    grid-template-columns: 1fr 2fr;
     align-items: center;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    text-align: center;
 }
 
 nav{
-    margin: 10px;
+    margin: 0;
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
     gap: 10px;
-    word-wrap: break-word;
 }
 
 .header-logo{
@@ -46,15 +47,24 @@ nav{
     margin-left: 5%;
     margin-right: 10%;
     align-items: center;
+    display: inline;
 }
 
 .header-button{
-    text-align: center;
     font-size: 30px;
     background-color: #1C3C7E;
     border-radius: 30px;
     width: 240px;
     height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.header-button-text{
+    margin: auto;
+    font-weight: bolder;
 }
 
 a{
@@ -62,9 +72,33 @@ a{
     color: white;
 }
 
+.back-button-parent{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+}
+
 .back-button{
-    margin: 30px 0 30px 0;
-    font-size: 30px;
+    background-color: #606060;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    display: block;
+    margin: auto;
+    margin-bottom: 20px;
+    margin-top: 20px;
+    padding: 10px 15px 10px 15px;
+    width: fit-content;
+    border-radius: 30px;
+    font-size: 20px;
+}
+
+.generic-button{
+    background-color: #606060;
+    border-radius: 25px;
+    text-align: center;
+    padding: 10px
 }
 
 .profile-logged-out{
@@ -87,17 +121,35 @@ label{
 }
 
 .level-thumbnail{
-    width: 200px;
+    width: 240px;
     border-radius: 5px;
 }
 
 .level-info{
     display: inline;
+    font-size: 40px;
+}
+
+.level-placement{
+    display: inline;
+    font-size: 30px;
+}
+
+.level-extras{
+    display: inline;
+    font-size: 25px;
+}
+
+.level-extras-grid{
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    gap: 10px;
+    font-size: 25px;
 }
 
 .level-card{
     display: grid;
-    grid-template-columns: 1fr 3fr 8fr;
+    grid-template-columns: 1fr 3fr 4fr 4fr;
     background-color: #242424;
     margin-bottom: 50px;
     text-align: center;
@@ -117,7 +169,7 @@ label{
     font-size: 35px;
     gap: 10px;
     margin-bottom: 30px;
-    border-radius: 5px;
+    border-radius: 10px;
 }
 
 .player-card-top-one-player{
@@ -161,6 +213,7 @@ label{
     padding-top: 30px;
     padding-bottom: 30px;
     margin: 0;
+    font-weight: bolder;
 }
 
 .vid-container{
@@ -168,4 +221,101 @@ label{
     justify-content: center;
     align-items: center;
     width: 100%;
+    border: none;
+}
+
+.form-parent{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+}
+
+.form-child{
+    background-color: #242424;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 30px;
+    width: 40%;
+    border-radius: 20px;
+}
+
+.form-label{
+    font-size: 40px;
+}
+
+.submit-button{
+    font-size: 20px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 15px;
+}
+
+.logout-button{
+    background-color: #c00000;
+    color: black;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    display: block;
+    margin: auto;
+    margin-bottom: 20px;
+    margin-top: 20px;
+    padding: 10px;
+    width: fit-content;
+    border-radius: 30px;
+    font-size: 20px;
+}
+
+.admin-control-button{
+    font-size: 20px;
+}
+
+.sub-heading{
+    font-size: 40px;
+    font-weight: bolder;
+}
+
+.completion-card{
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    font-size: 35px;
+    background-color: #242424;
+    width: 50%;
+    height: 75px;
+    padding: 10px;
+    margin: auto;
+    border-radius: 15px;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.completion-card-content{
+    margin: 0;
+}
+
+.completion-card-victor-desc{
+    font-size: 20px;
+}
+
+.victor-card{
+    background-color: #242424;
+    width: 30%;
+    margin: auto;
+    margin-top: 10px;
+    height: 40px;
+    border-radius: 20px;
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+}
+
+.victor-name{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    margin: 0;
+    font-size: 35px;
 }

@@ -1,21 +1,26 @@
 {% extends "layout.html" %}
 
 {% block content %}
-
-<form action="/signup/register" method="post">
-    <label>Username</label>
-    <br>
-    <input type="text" name="username" autocomplete="new-password" required maxlength="{{userMaxL}}" minlength="{{userMinL}}">
-    <br><br><br>
-    <label>Password</label>
-    <br><br>
-    <input type="password" name="password" autocomplete="new-password" required minlength="{{passMinL}}" maxlength="{{passMaxL}}">
-    <br><br><br>
-    <label>Confirm Password</label>
-    <br><br>
-    <input type="password" name="confirm-password" autocomplete="new-password" required maxlength="{{passMaxL}}" minlength="{{passMinL}}">
-    <br><br><br>
-    <input type="submit" value="Sign Up">
-</form>
-
+<div class="form-parent">
+    <div class="form-child">
+        <form action="/signup/register" method="post">
+            <label class="form-label">Username</label>
+            <br>
+            <input type="text" name="username" autocomplete="new-password" required maxlength="{{userMaxL}}" minlength="{{userMinL}}">
+            <br><br><br><br>
+            <label class="form-label">Password</label>
+            <br><br>
+            <input type="password" name="password" autocomplete="new-password" required minlength="{{passMinL}}" maxlength="{{passMaxL}}">
+            <br><br><br><br>
+            <label class="form-label">Confirm Password</label>
+            <br><br>
+            <input type="password" name="confirm-password" autocomplete="new-password" required maxlength="{{passMaxL}}" minlength="{{passMinL}}">
+            <br><br><br>
+            <input type="submit" value="Sign Up" class="submit-button">
+        </form>
+        <br>
+        <h3>Already have an account?</h3>
+        <a href="login" class="generic-button">Log in</a>
+    </div>
+</div>
 {% endblock %}

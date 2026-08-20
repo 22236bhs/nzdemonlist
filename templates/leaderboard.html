@@ -2,8 +2,6 @@
 
 {% block content %}
 
-<h1 class="title-text">Leaderboard</h1>
-
 {% for i in range(players|length) %}
 <a href="/leaderboard/{{players[i][0].id}}">
     <div class="player-card">

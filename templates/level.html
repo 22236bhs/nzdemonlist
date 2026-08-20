@@ -2,22 +2,29 @@
 
 {% block content %}
 <div class="vid-container">
-    <iframe class="comp-vid" width="608px" height="308px" src="{{level.verification.completion_link}}" allowfullscreen></iframe>
+    <iframe class="comp-vid" width="608px" height="308px" src="{{verificationVid}}" allowfullscreen></iframe>
 </div>
-<h1>name: {{level.name}}</h1>
-<h2>placement: {{level.placement}}</h2>
-<h2>Verifier: {{level.verifier.name}}</h2>
-<h2>Publisher: {{level.publisher.name}}</h2>
+<h1>Placement: #{{level.placement}}</h1>
+<h1>Verified by {{level.verifier.name}}</h1>
+<h1>Published by {{level.publisher.name}}</h1>
 <br>
-<h2>Victors:</h2>
+<h1>Victors</h1>
 
 {% if completions %}
 {% for completion in completions %}
-<h3><a href="/leaderboard/{{completion[0].player.id}}">- {{completion[0].player.name}}</a></h3>
+
+<a href="/leaderboard/{{completion[0].player.id}}">
+    <div class="victor-card">
+        <p class="victor-name">
+            {{completion[0].player.name}}
+        </p>
+    </div>
+</a>
+
 {% endfor %}
 
 {% else %}
-<h3>No Victors</h3>
+<h2>No Victors</h2>
 {% endif %}
 
 {% endblock %}
