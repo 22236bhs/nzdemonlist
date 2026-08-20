@@ -260,7 +260,6 @@ def IsValidLength(text: str, maxL: int, minL: int):
 # Demonlist page
 @app.route("/")
 def list():
-    CalculateNewLevelPoints()
     data = db.session().execute(
         select(Levels).order_by(Levels.placement)).scalars()
     return render_template("list.html", data=data, title="Demonlist")
