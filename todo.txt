@@ -1,6 +1,0 @@
-Sprint 3
-  goals: 
-    -- testing + review
-  
-- end of project stuff
-- Finish database testing for sprint 2
