@@ -7,6 +7,10 @@
     font-style: normal;
 }
 
+html, body{
+    height: 100%;
+}
+
 body{
     margin: 0 10vw 0 10vw;
     background-color: #494949;
@@ -14,13 +18,15 @@ body{
 }
 
 .content{
-    height: 100%;
+    padding: 15px;
+    padding-top: 0;
+    text-align: center;
+}
+
+.background{
+    min-height: 100%;
     background-color: #313131;
     margin: 0;
-    padding: 1vw;
-    padding-top: 1px;
-    min-height: 81vh;
-    text-align: center;
 }
 
 header{

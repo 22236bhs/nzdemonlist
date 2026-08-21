@@ -7,31 +7,34 @@
     <title>NZDL - {{title}}</title>
 </head>
 <body>
-    <header>
-    {% include "header.html" %}
-    </header>
-    <div class="content">
-    {% if topText %}
-    <h1 class="title-text">{{topText}}</h1>
-    {% endif %}
+    <div class="background">
+        <header>
+        {% include "header.html" %}
+        </header>
+        <div class="content">
 
-    {% if back %}
-    <a class="back-button" href="{{back}}">Back</a>
-    {% endif %}
+        {% if topText %}
+        <h1 class="title-text">{{topText}}</h1>
+        {% endif %}
 
-    {% if message %}
+        {% if back %}
+        <a class="back-button" href="{{back}}">Back</a>
+        {% endif %}
 
-    {% if message[1]%}
-    <h1 class="error-message">
-    {% else %}
-    <h1 class="success-message">
-    {% endif %}
-        {{message[0]}}
-    </h1>
-    {% endif %}
-    
-    {% block content %}
-    {% endblock %}
+        {% if message %}
+
+        {% if message[1]%}
+        <h1 class="error-message">
+        {% else %}
+        <h1 class="success-message">
+        {% endif %}
+            {{message[0]}}
+        </h1>
+        {% endif %}
+        
+        {% block content %}
+        {% endblock %}
+        </div>
     </div>
 </body>
 </html>

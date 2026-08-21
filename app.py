@@ -328,7 +328,8 @@ def leaderboard():
                                 WHERE Levels.id in (
                                     SELECT level_id
                                     FROM Completions
-                                    WHERE player_id = {player[0].id})
+                                    WHERE player_id = {player[0].id}
+                                    AND accepted = 1)
                                 ORDER BY Levels.placement ASC;''')).fetchall()
 
         # Bundles player info with their hardest level,
