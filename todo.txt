@@ -1,13 +1,6 @@
 Sprint 3
   goals: 
-    -- finished wireframes and implemented them
     -- testing + review
   
 - end of project stuff
-- sprint 2 feedback response
-- Finish database testing
-  
-notes:
-- Get lots of feedback even if it's useless
-- Ask mr rodkiss about database integrity and testing. 
-- ask about secret key
+- Finish database testing for sprint 2
