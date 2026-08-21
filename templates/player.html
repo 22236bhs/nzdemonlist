@@ -13,11 +13,11 @@
 
 <h1>Hardest: {{userComps[0][0]}}</h1>
 <h1>{{player.points}} Total Points</h1>
+<h1>{{extremeCount}} Extremes</h1>
 <br>
 <h1 class="sub-heading">Completions</h1>
 {% if userComps %}
 {% for completion in userComps %}
-
 {% if completion[2] %}
 <a href="{{completion[1]}}" target="_blank">
     <div class="completion-card">
@@ -33,6 +33,7 @@
         {% else %}
         <p class="completion-card-content completion-card-victor-desc">{{completion[3]}}th Victor</p>
         {% endif %}
+        <p class="completion-card-content completion-card-victor-desc">{{completion[4]}} FPS - {{cbfOptions[completion[5]]}}</p>
     </div>
 </a>
 {% endif %}

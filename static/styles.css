@@ -285,11 +285,11 @@ label{
 
 .completion-card{
     display: grid;
-    grid-template-rows: 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
     font-size: 35px;
     background-color: #242424;
     width: 50%;
-    height: 75px;
+    height: 100px;
     padding: 10px;
     margin: auto;
     border-radius: 15px;

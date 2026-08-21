@@ -24,26 +24,30 @@
 <br>
 <a class="logout-button" href="/logout">LOGOUT</a>
 
-<h1 class="sub-heading">My completions</h1>
-{% for completion in user.user_completions %}
-{% if completion.accepted %}
-<a href="{{completion.completion_link}}" target="_blank">
+<h1 class="sub-heading">My Completions</h1>
+{% if userComps %}
+{% for completion in userComps %}
+{% if completion[2] %}
+<a href="{{completion[1]}}" target="_blank">
     <div class="completion-card">
-        <p class="completion-card-content">{{completion.level.name}}</p>
-        {% if completion.index == 0 %}
+        <p class="completion-card-content">{{completion[0]}}</p>
+        {% if completion[3] == 0 %}
         <p class="completion-card-content completion-card-victor-desc">Verifier</p>
-        {% elif completion.index == 1 %}
+        {% elif completion[3] == 1 %}
         <p class="completion-card-content completion-card-victor-desc">1st Victor</p>
-        {% elif completion.index == 2 %}
+        {% elif completion[3] == 2 %}
         <p class="completion-card-content completion-card-victor-desc">2nd Victor</p>
-        {% elif completion.index == 3 %}
+        {% elif completion[3] == 3 %}
         <p class="completion-card-content completion-card-victor-desc">3rd Victor</p>
         {% else %}
-        <p class="completion-card-content completion-card-victor-desc">{{completion.index}}th Victor</p>
+        <p class="completion-card-content completion-card-victor-desc">{{completion[3]}}th Victor</p>
         {% endif %}
+        <p class="completion-card-content completion-card-victor-desc">{{completion[4]}} FPS - {{cbfOptions[completion[5]]}}</p>
     </div>
 </a>
 {% endif %}
 {% endfor %}
-
+{% else %}
+<h1>No Completions</h1>
+{% endif %}
 {% endblock %}

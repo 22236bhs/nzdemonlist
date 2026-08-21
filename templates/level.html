@@ -5,15 +5,16 @@
     <iframe class="comp-vid" width="608px" height="308px" src="{{verificationVid}}" allowfullscreen></iframe>
 </div>
 <h1>Placement: #{{level.placement}}</h1>
-<h1>Verified by {{level.verifier.name}}</h1>
 <h1>Published by {{level.publisher.name}}</h1>
+<h1>Verified by {{level.verifier.name}}</h1>
+<h2>{{level.verification.FPS}} FPS - {{cbfOptions[level.verification.CBF]}}</h2>
 <br>
 <h1 class="sub-heading">Victors</h1>
 
 {% if completions %}
 {% for completion in completions %}
 
-<a href="/leaderboard/{{completion[0].player.id}}">
+<a href="{{completion[0].completion_link}}" target="_blank">
     <div class="victor-card">
         <p class="victor-name">
             {{completion[0].player.name}}

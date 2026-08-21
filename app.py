@@ -278,6 +278,10 @@ def level(id):
     data = db.session().execute(
         select(Levels).where(Levels.id == id)).scalar_one_or_none()
 
+    # Return page not found error if the level doesn't exist
+    if not data:
+        abort(404)
+
     # Convert the completion video link to an iframe embed
     completionLink = data.verification.completion_link
     youtubeLinkCode = ""
@@ -295,9 +299,6 @@ def level(id):
             Completions.level_id == id).where(
                 Completions.index > 0).order_by(Completions.index)).fetchall()
 
-    # Return page not found error if the level doesn't exist
-    if not data:
-        abort(404)
     return render_template(
         "level.html",
         level=data,
@@ -305,7 +306,8 @@ def level(id):
         back="/",
         completions=completions,
         verificationVid=completionLink,
-        topText=data.name
+        topText=data.name,
+        cbfOptions=config.cbfOptions
     )
 
 
@@ -317,7 +319,8 @@ def leaderboard():
     players = conn.execute(
         select(Users).where(
             select(Completions).where(
-                Completions.player_id == Users.id).exists()
+                Completions.player_id == Users.id).exists().where(
+                    Completions.accepted == 1)
                 ).order_by(Users.points.desc())).fetchall()
 
     playersFinal = []
@@ -355,13 +358,14 @@ def player(id):
 
     beaten = conn.execute(text(f'''
 SELECT Levels.name, Completions.completion_link, Completions.accepted,
-Completions.\"index\"
+Completions.\"index\", Completions.FPS, Completions.CBF
 FROM Levels
 JOIN Completions ON Completions.level_id = Levels.id
 WHERE Levels.id in (
     SELECT level_id
     FROM Completions
-    WHERE player_id = {id})
+    WHERE player_id = {id}
+    AND accepted = 1)
 AND Completions.player_id = {id}
 ORDER BY Levels.placement ASC;''')).fetchall()
 
@@ -369,12 +373,18 @@ ORDER BY Levels.placement ASC;''')).fetchall()
     if not playerData:
         abort(404)
 
+    # Return page not found error if player has no completions
+    if not beaten:
+        abort(404)
+
     return render_template(
         "player.html",
         player=playerData,
         title=playerData.name,
         back="/leaderboard",
-        userComps=beaten
+        userComps=beaten,
+        extremeCount=len(beaten),
+        cbfOptions=config.cbfOptions
     )
 
 
@@ -384,13 +394,35 @@ def profile():
     # Opens a different page depending on whether the user,
     # is logged in or not
     if IsLoggedIn():
+        conn = db.session()
+        playerID = GetUser().id
+
+        beaten = conn.execute(text(f'''
+    SELECT Levels.name, Completions.completion_link, Completions.accepted,
+    Completions.\"index\", Completions.FPS, Completions.CBF
+    FROM Levels
+    JOIN Completions ON Completions.level_id = Levels.id
+    WHERE Levels.id in (
+        SELECT level_id
+        FROM Completions
+        WHERE player_id = {playerID}
+        AND accepted = 1)
+    AND Completions.player_id = {playerID}
+    ORDER BY Levels.placement ASC;''')).fetchall()
+
+        # Return page not found error if player has no completions
+        if not beaten:
+            abort(404)
+
         return render_template(
             "profile.html",
             user=GetUser(),
             topText=f"Hello {GetUser().name}",
             title="Profile",
             isadmin=IsAdmin(),
-            isowner=IsOwner()
+            isowner=IsOwner(),
+            userComps=beaten,
+            cbfOptions=config.cbfOptions
         )
     else:
         return app.redirect("/login")
@@ -881,6 +913,7 @@ def adminremove(id):
     return app.redirect("/adminmanaging")
 
 
+# Admin: Page for adding a new level
 @app.route("/addlevel")
 def addlevelpage():
     if not IsAdmin():
@@ -902,7 +935,7 @@ def addlevelpage():
     )
 
 
-# Admin: Route for adding the level
+# Admin: Route for processing the leve add form
 @app.route("/addlevel/register", methods=["GET", "POST"])
 def addlevel():
     if not IsAdmin():
