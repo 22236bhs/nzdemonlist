@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, session, abort
+from flask import Flask, render_template, request, session, abort, redirect
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy import String, Integer, ForeignKey, select, update, text
@@ -326,14 +326,16 @@ def leaderboard():
     playersFinal = []
     for player in players:
         # Fetch the completions of each player
-        beaten = conn.execute(text(f'''SELECT Levels.name
+        beaten = conn.execute(
+            text('''SELECT Levels.name
                                 FROM Levels
                                 WHERE Levels.id in (
                                     SELECT level_id
                                     FROM Completions
-                                    WHERE player_id = {player[0].id}
+                                    WHERE player_id = :player_id
                                     AND accepted = 1)
-                                ORDER BY Levels.placement ASC;''')).fetchall()
+                                ORDER BY Levels.placement ASC;'''),
+            {"player_id": player[0].id}).fetchall()
 
         # Bundles player info with their hardest level,
         # and their beaten level count
@@ -356,7 +358,7 @@ def player(id):
     playerData = conn.execute(
         select(Users).where(Users.id == id)).scalar_one_or_none()
 
-    beaten = conn.execute(text(f'''
+    beaten = conn.execute(text('''
 SELECT Levels.name, Completions.completion_link, Completions.accepted,
 Completions.\"index\", Completions.FPS, Completions.CBF
 FROM Levels
@@ -364,10 +366,10 @@ JOIN Completions ON Completions.level_id = Levels.id
 WHERE Levels.id in (
     SELECT level_id
     FROM Completions
-    WHERE player_id = {id}
+    WHERE player_id = :id
     AND accepted = 1)
-AND Completions.player_id = {id}
-ORDER BY Levels.placement ASC;''')).fetchall()
+AND Completions.player_id = :id
+ORDER BY Levels.placement ASC;'''), {"id": id}).fetchall()
 
     # Return page not found error if the player doesn't exist
     if not playerData:
@@ -397,7 +399,7 @@ def profile():
         conn = db.session()
         playerID = GetUser().id
 
-        beaten = conn.execute(text(f'''
+        beaten = conn.execute(text('''
     SELECT Levels.name, Completions.completion_link, Completions.accepted,
     Completions.\"index\", Completions.FPS, Completions.CBF
     FROM Levels
@@ -405,14 +407,10 @@ def profile():
     WHERE Levels.id in (
         SELECT level_id
         FROM Completions
-        WHERE player_id = {playerID}
+        WHERE player_id = :player_id
         AND accepted = 1)
-    AND Completions.player_id = {playerID}
-    ORDER BY Levels.placement ASC;''')).fetchall()
-
-        # Return page not found error if player has no completions
-        if not beaten:
-            abort(404)
+    AND Completions.player_id = :player_id
+    ORDER BY Levels.placement ASC;'''), {"player_id": playerID}).fetchall()
 
         return render_template(
             "profile.html",
@@ -425,21 +423,21 @@ def profile():
             cbfOptions=config.cbfOptions
         )
     else:
-        return app.redirect("/login")
+        return redirect("/login")
 
 
 # Route to log out user
 @app.route("/logout")
 def logout():
     SignOutUser()
-    return app.redirect("/profile")
+    return redirect("/profile")
 
 
 # Signup page
 @app.route("/signup")
 def signup():
     if IsLoggedIn():
-        return app.redirect("/profile")
+        return redirect("/profile")
 
     message = GetMessage("signup")
 
@@ -497,7 +495,7 @@ def signupregister():
         success = False
 
     if not success:
-        return app.redirect("/signup")
+        return redirect("/signup")
 
     else:
         # Hash the user password and create the new User object
@@ -512,14 +510,14 @@ def signupregister():
         db.session().commit()
         LogInUser(db.session().execute(
             select(Users).where(Users.name == username)).scalar_one().id)
-        return app.redirect("/profile")
+        return redirect("/profile")
 
 
 # Login page
 @app.route("/login")
 def login():
     if IsLoggedIn():
-        return app.redirect("/profile")
+        return redirect("/profile")
 
     message = GetMessage("login")
 
@@ -540,7 +538,7 @@ def login():
 @app.route("/login/register", methods=["GET", "POST"])
 def loginregister():
     if IsLoggedIn():
-        return app.redirect("/profile")
+        return redirect("/profile")
 
     success = True
 
@@ -562,7 +560,7 @@ def loginregister():
 
     if not success:
         SetMessage("login", "Invalid Input")
-        return app.redirect("/login")
+        return redirect("/login")
     else:
         user = db.session().execute(
             select(Users).where(Users.name == username)).scalar_one_or_none()
@@ -570,16 +568,16 @@ def loginregister():
         # Reject login if username doesn't exist in database
         if not user:
             SetMessage("login", config.loginFail)
-            return app.redirect("/login")
+            return redirect("/login")
 
         else:
             # Log in user if entered password is correct.
             if check_password_hash(user.password_hash, password):
                 LogInUser(user.id)
-                return app.redirect("/profile")
+                return redirect("/profile")
             else:
                 SetMessage("login", config.loginFail)
-                return app.redirect("/login")
+                return redirect("/login")
 
 
 # Record submission page
@@ -650,7 +648,7 @@ def submitrecordform():
 
     if not success:
         SetMessage("submission", config.submissionFail)
-        return app.redirect("/submission")
+        return redirect("/submission")
 
     # Reject submission if the user already has a submission
     # for the particular level
@@ -660,7 +658,7 @@ def submitrecordform():
             (Completions.player_id == GetUser().id)).scalar_one_or_none():
 
         SetMessage("submission", config.submissionAlreadyExists)
-        return app.redirect("/submission")
+        return redirect("/submission")
 
     # Create Completion object and add to database
     completion = Completions(
@@ -691,7 +689,7 @@ def submitrecordform():
 
     SetMessage("submission", config.submissionSuccess, False)
 
-    return app.redirect("/submission")
+    return redirect("/submission")
 
 
 # Admin: record submission listing page
@@ -785,14 +783,16 @@ def reviewrecordchoice(subid, accepted):
         SetMessage("/reviewrecords", "Record Accepted", False)
     else:
         # If the record is rejected, delete it the completion from the database
-        conn.execute(text(f"DELETE FROM Completions WHERE id == {compID};"))
+        conn.execute(text("DELETE FROM Completions WHERE id == :compid;"),
+                     {"compid": compID})
         SetMessage("/reviewrecords", "Record Rejected")
 
     # Delete the submission
-    conn.execute(text(f"DELETE FROM Submissions WHERE id == {subid};"))
+    conn.execute(text("DELETE FROM Submissions WHERE id == :subid;"),
+                 {"subid": subid})
     conn.commit()
 
-    return app.redirect("/reviewrecords")
+    return redirect("/reviewrecords")
 
 
 # Owner: Admin managing page
@@ -858,7 +858,7 @@ def adminadd(id):
     conn.commit()
 
     SetMessage("/adminmanaging", f"{user.name} added as an Admin", False)
-    return app.redirect("/adminmanaging")
+    return redirect("/adminmanaging")
 
 
 # Owner: Admin removing page
@@ -910,7 +910,7 @@ def adminremove(id):
     conn.commit()
     SetMessage("/adminmanaging", f"{user.name} removed as Admin")
 
-    return app.redirect("/adminmanaging")
+    return redirect("/adminmanaging")
 
 
 # Admin: Page for adding a new level
@@ -998,7 +998,7 @@ def addlevel():
 
     if not success:
         SetMessage("/addlevel", config.invalidLevelCreation)
-        return app.redirect("/addlevel")
+        return redirect("/addlevel")
     else:
         # Find the file suffix of the image filename
         newFileName = ""
@@ -1061,7 +1061,7 @@ def addlevel():
         CalculateNewLevelPoints()
 
         SetMessage("/addlevel", config.levelCreationSuccess, False)
-        return app.redirect(f"/level/{nextLevelID}")
+        return redirect(f"/level/{nextLevelID}")
 
 
 # Route for 404 error handling
