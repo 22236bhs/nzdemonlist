@@ -22,28 +22,28 @@ class Base(DeclarativeBase):
 
 
 class Completions(Base):
-    __tablename__ = "Completions"
+    __tablename__ = "completions"
     id: Mapped[int] = mapped_column(primary_key=True)
-    player_id: Mapped[int] = mapped_column(ForeignKey("Users.id"))
+    player_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     player: Mapped["Users"] = relationship(back_populates="user_completions")
-    level_id: Mapped[int] = mapped_column(ForeignKey("Levels.id"))
+    level_id: Mapped[int] = mapped_column(ForeignKey("levels.id"))
     level: Mapped["Levels"] = relationship(
-        primaryjoin="Completions.level_id == Levels.id",
+        primaryjoin="completions.level_id == levels.id",
         back_populates="level_completions")
     completion_link: Mapped[str] = mapped_column(String())
-    FPS: Mapped[int] = mapped_column(Integer())
-    CBF: Mapped[int] = mapped_column(Integer())
+    fps: Mapped[int] = mapped_column(Integer())
+    cbf: Mapped[int] = mapped_column(Integer())
     accepted: Mapped[int] = mapped_column(Integer())
     index: Mapped[int] = mapped_column(Integer())
 
 
 class Users(Base):
-    __tablename__ = "Users"
+    __tablename__ = "users"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String())
     points: Mapped[int] = mapped_column(Integer())
     password_hash: Mapped[str] = mapped_column(String())
-    admin_rank_id: Mapped[int] = mapped_column(ForeignKey("Admin Ranks.id"))
+    admin_rank_id: Mapped[int] = mapped_column(ForeignKey("admin_ranks.id"))
     admin_rank: Mapped["AdminRanks"] = relationship(
         back_populates="children",)
     user_completions: Mapped[list["Completions"]] = relationship(
@@ -51,36 +51,36 @@ class Users(Base):
 
 
 class Levels(Base):
-    __tablename__ = "Levels"
+    __tablename__ = "levels"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String())
     placement: Mapped[int] = mapped_column(Integer())
-    verifier_id: Mapped[int] = mapped_column(ForeignKey("Users.id"))
+    verifier_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     verifier: Mapped["Users"] = relationship(
-        primaryjoin="Levels.verifier_id == Users.id")
-    verification_id: Mapped[int] = mapped_column(ForeignKey("Completions.id"))
+        primaryjoin="levels.verifier_id == users.id")
+    verification_id: Mapped[int] = mapped_column(ForeignKey("completions.id"))
     verification: Mapped["Completions"] = relationship(
-        primaryjoin="Levels.verification_id == Completions.id")
-    publisher_id: Mapped[int] = mapped_column(ForeignKey("Users.id"))
+        primaryjoin="levels.verification_id == completions.id")
+    publisher_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     publisher: Mapped["Users"] = relationship(
-        primaryjoin="Levels.publisher_id == Users.id")
+        primaryjoin="levels.publisher_id == users.id")
     level_completions: Mapped[list["Completions"]] = relationship(
-        primaryjoin="Completions.level_id == Levels.id",
+        primaryjoin="completions.level_id == levels.id",
         back_populates="level")
     points: Mapped[int] = mapped_column(Integer())
     image_name: Mapped[str] = mapped_column(String())
 
 
 class Submissions(Base):
-    __tablename__ = "Submissions"
+    __tablename__ = "submissions"
     id: Mapped[int] = mapped_column(primary_key=True)
-    completion_id: Mapped[int] = mapped_column(ForeignKey("Completions.id"))
+    completion_id: Mapped[int] = mapped_column(ForeignKey("completions.id"))
     completion: Mapped["Completions"] = relationship()
     time: Mapped[int] = mapped_column(Integer())
 
 
 class AdminRanks(Base):
-    __tablename__ = "Admin Ranks"
+    __tablename__ = "admin_ranks"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String())
     description: Mapped[str] = mapped_column(String())
@@ -327,14 +327,14 @@ def leaderboard():
     for player in players:
         # Fetch the completions of each player
         beaten = conn.execute(
-            text('''SELECT Levels.name
-                                FROM Levels
-                                WHERE Levels.id in (
+            text('''SELECT levels.name
+                                FROM levels
+                                WHERE levels.id in (
                                     SELECT level_id
-                                    FROM Completions
+                                    FROM completions
                                     WHERE player_id = :player_id
                                     AND accepted = 1)
-                                ORDER BY Levels.placement ASC;'''),
+                                ORDER BY levels.placement ASC;'''),
             {"player_id": player[0].id}).fetchall()
 
         # Bundles player info with their hardest level,
@@ -359,17 +359,17 @@ def player(id):
         select(Users).where(Users.id == id)).scalar_one_or_none()
 
     beaten = conn.execute(text('''
-SELECT Levels.name, Completions.completion_link, Completions.accepted,
-Completions.\"index\", Completions.FPS, Completions.CBF
-FROM Levels
-JOIN Completions ON Completions.level_id = Levels.id
-WHERE Levels.id in (
+SELECT levels.name, completions.completion_link, completions.accepted,
+completions.\"index\", completions.FPS, completions.CBF
+FROM levels
+JOIN completions ON completions.level_id = levels.id
+WHERE levels.id in (
     SELECT level_id
-    FROM Completions
+    FROM completions
     WHERE player_id = :id
     AND accepted = 1)
-AND Completions.player_id = :id
-ORDER BY Levels.placement ASC;'''), {"id": id}).fetchall()
+AND completions.player_id = :id
+ORDER BY levels.placement ASC;'''), {"id": id}).fetchall()
 
     # Return page not found error if the player doesn't exist
     if not playerData:
@@ -400,17 +400,17 @@ def profile():
         playerID = GetUser().id
 
         beaten = conn.execute(text('''
-    SELECT Levels.name, Completions.completion_link, Completions.accepted,
-    Completions.\"index\", Completions.FPS, Completions.CBF
-    FROM Levels
-    JOIN Completions ON Completions.level_id = Levels.id
-    WHERE Levels.id in (
+    SELECT levels.name, completions.completion_link, completions.accepted,
+    completions.\"index\", completions.FPS, completions.CBF
+    FROM levels
+    JOIN completions ON completions.level_id = levels.id
+    WHERE levels.id in (
         SELECT level_id
-        FROM Completions
+        FROM completions
         WHERE player_id = :player_id
         AND accepted = 1)
-    AND Completions.player_id = :player_id
-    ORDER BY Levels.placement ASC;'''), {"player_id": playerID}).fetchall()
+    AND completions.player_id = :player_id
+    ORDER BY levels.placement ASC;'''), {"player_id": playerID}).fetchall()
 
         return render_template(
             "profile.html",
@@ -665,8 +665,8 @@ def submitrecordform():
         player_id=GetUser().id,
         level_id=levelID,
         completion_link=completionLink,
-        FPS=fps,
-        CBF=cbf,
+        fps=fps,
+        cbf=cbf,
         accepted=0,
         index=0
         )
@@ -783,12 +783,12 @@ def reviewrecordchoice(subid, accepted):
         SetMessage("/reviewrecords", "Record Accepted", False)
     else:
         # If the record is rejected, delete it the completion from the database
-        conn.execute(text("DELETE FROM Completions WHERE id == :compid;"),
+        conn.execute(text("DELETE FROM completions WHERE id == :compid;"),
                      {"compid": compID})
         SetMessage("/reviewrecords", "Record Rejected")
 
     # Delete the submission
-    conn.execute(text("DELETE FROM Submissions WHERE id == :subid;"),
+    conn.execute(text("DELETE FROM submissions WHERE id == :subid;"),
                  {"subid": subid})
     conn.commit()
 
@@ -1048,8 +1048,8 @@ def addlevel():
             player_id=verifierID,
             level_id=nextLevelID,
             completion_link=completionLink,
-            FPS=fps,
-            CBF=cbf,
+            fps=fps,
+            cbf=cbf,
             accepted=1,
             index=0
         )
