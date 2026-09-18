@@ -28,7 +28,7 @@ class Completions(Base):
     player: Mapped["Users"] = relationship(back_populates="user_completions")
     level_id: Mapped[int] = mapped_column(ForeignKey("levels.id"))
     level: Mapped["Levels"] = relationship(
-        primaryjoin="completions.level_id == levels.id",
+        primaryjoin="Completions.level_id == Levels.id",
         back_populates="level_completions")
     completion_link: Mapped[str] = mapped_column(String())
     fps: Mapped[int] = mapped_column(Integer())
@@ -57,15 +57,15 @@ class Levels(Base):
     placement: Mapped[int] = mapped_column(Integer())
     verifier_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     verifier: Mapped["Users"] = relationship(
-        primaryjoin="levels.verifier_id == users.id")
+        primaryjoin="Levels.verifier_id == Users.id")
     verification_id: Mapped[int] = mapped_column(ForeignKey("completions.id"))
     verification: Mapped["Completions"] = relationship(
-        primaryjoin="levels.verification_id == completions.id")
+        primaryjoin="Levels.verification_id == Completions.id")
     publisher_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     publisher: Mapped["Users"] = relationship(
-        primaryjoin="levels.publisher_id == users.id")
+        primaryjoin="Levels.publisher_id == Users.id")
     level_completions: Mapped[list["Completions"]] = relationship(
-        primaryjoin="completions.level_id == levels.id",
+        primaryjoin="Completions.level_id == Levels.id",
         back_populates="level")
     points: Mapped[int] = mapped_column(Integer())
     image_name: Mapped[str] = mapped_column(String())
