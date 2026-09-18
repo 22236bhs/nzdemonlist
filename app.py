@@ -231,6 +231,7 @@ def PlayerAddLevelPoints(playerID: int, levelID: int) -> None:
     level = conn.execute(
         select(Levels).where(Levels.id == levelID)).scalar_one()
     newPoints = user.points + level.points
+    newPoints = str(round(newPoints, 1))
     conn.execute(
         update(Users).where(Users.id == playerID).values(points=newPoints))
     conn.commit()
