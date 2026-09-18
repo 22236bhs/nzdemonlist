@@ -43,9 +43,9 @@ class Users(Base):
     name: Mapped[str] = mapped_column(String())
     points: Mapped[int] = mapped_column(Integer())
     password_hash: Mapped[str] = mapped_column(String())
-    admin_rank_id: Mapped[int] = mapped_column(ForeignKey("admin_ranks.id"))
+    admin_rank_id: Mapped[int] = mapped_column(ForeignKey("Admin Ranks.id"))
     admin_rank: Mapped["AdminRanks"] = relationship(
-        back_populates="children")
+        back_populates="children",)
     user_completions: Mapped[list["Completions"]] = relationship(
         back_populates="player")
 
@@ -72,7 +72,7 @@ class Levels(Base):
 
 
 class Submissions(Base):
-    __tablename__ = "submissions"
+    __tablename__ = "Submissions"
     id: Mapped[int] = mapped_column(primary_key=True)
     completion_id: Mapped[int] = mapped_column(ForeignKey("Completions.id"))
     completion: Mapped["Completions"] = relationship()
@@ -80,7 +80,7 @@ class Submissions(Base):
 
 
 class AdminRanks(Base):
-    __tablename__ = "admin_ranks"
+    __tablename__ = "Admin Ranks"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String())
     description: Mapped[str] = mapped_column(String())
@@ -788,7 +788,7 @@ def reviewrecordchoice(subid, accepted):
         SetMessage("/reviewrecords", "Record Rejected")
 
     # Delete the submission
-    conn.execute(text("DELETE FROM submissions WHERE id == :subid;"),
+    conn.execute(text("DELETE FROM Submissions WHERE id == :subid;"),
                  {"subid": subid})
     conn.commit()
 
